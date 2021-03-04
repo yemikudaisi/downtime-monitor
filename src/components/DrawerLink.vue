@@ -1,7 +1,7 @@
 <template>
   <q-item
     clickable
-    to="link"
+    :to="link"
   >
     <q-item-section
       v-if="icon"
