@@ -21,8 +21,8 @@
       </q-toolbar>
     </div>
     <q-separator />
-    <q-toolbar class="col-12 row q-my-md">
-      <q-input bottom-slots v-model="searchText" class="col-md-12" label="Enter website URL" stretch :dense="true">
+    <q-toolbar class="row q-my-md">
+      <q-input bottom-slots v-model="searchText" class="col-12" label="Enter website URL" stretch :dense="true">
         <template v-slot:hint>
           enter fully qualified name for website
         </template>
@@ -43,7 +43,21 @@
         selection="multiple"
         :selected="selectedWebsites"
         @selection="onWebsiteSelection"
-      />
+      >
+        <template v-slot:body-cell-name="props">
+          <q-td :props="props">
+            <div class="my-table-details">
+              {{ props.row.name }}
+            </div>
+            <q-badge color="primary" :label="props.row.url" />
+          </q-td>
+      </template>
+      <template v-slot:body-cell-status="props">
+          <q-td :props="props">
+            <q-icon name="ion-radio-button-on" v-bind:color="getStatusColor(props.row.online)" style="font-size: 2em;" />
+          </q-td>
+      </template>
+      </q-table>
     </div>
     <div class="q-mt-md">
       Selected: {{ JSON.stringify(selectedWebsites) }}
@@ -79,8 +93,8 @@ export default {
       orderByOptions: [
         'By type', 'By status'
       ],
-      selectedTableMode: 'Grid',
-      tableGridMode: true,
+      selectedTableMode: 'Table',
+      tableGridMode: false,
       tableModeOptions: [
         'Table', 'Grid'
       ],
@@ -95,7 +109,7 @@ export default {
           sortable: true
         },
         { name: 'type', label: 'Type', field: 'type', sortable: true },
-        { name: 'status', label: 'Status', field: 'online', sortable: true }
+        { name: 'status', align: 'center', label: 'Status', field: 'online', sortable: true }
       ],
       websites: [],
       showWebsiteDialog: false,
@@ -168,6 +182,12 @@ export default {
       for (let i = from; i <= to; i += 1) {
         operateSelection(filteredSortedRows[i])
       }
+    },
+    getStatusColor (val) {
+      if (val) {
+        return 'green'
+      }
+      return 'red'
     }
   }
 }
@@ -176,7 +196,7 @@ var website = {
   name: 'Army Website',
   url: 'army.mil.ng',
   type: 'PING',
-  online: false
+  online: true
 }
 </script>
 
