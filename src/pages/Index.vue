@@ -8,7 +8,12 @@
         </div>
         <q-select color="grey-3" dense label-color="white" v-model="orderBy" :options="orderByOptions" label="Order by" style="width: 300px;">
           <template v-slot:append>
-            <q-icon name="event" color="white" />
+            <q-icon name="ion-reorder" color="white" />
+          </template>
+        </q-select>
+        <q-select color="black" dense label-color="white" v-model="selectedTableMode" :options="tableModeOptions" label="Table Mode" style="width: 300px;">
+          <template v-slot:append>
+            <q-icon name="ion-grid" color="white" />
           </template>
         </q-select>
         <q-space />
@@ -28,6 +33,7 @@
     </q-toolbar>
     <div class="q-pa-md">
       <q-table
+        :grid="tableGridMode ? true : false"
         ref="websitesTable"
         title="Websites"
         :data="websites"
@@ -73,6 +79,11 @@ export default {
       orderByOptions: [
         'By type', 'By status'
       ],
+      selectedTableMode: 'Grid',
+      tableGridMode: true,
+      tableModeOptions: [
+        'Table', 'Grid'
+      ],
       tableColumns: [
         {
           name: 'name',
@@ -84,13 +95,22 @@ export default {
           sortable: true
         },
         { name: 'type', label: 'Type', field: 'type', sortable: true },
-        { name: 'Status', label: 'Uptime', field: 'upTime', sortable: true }
+        { name: 'status', label: 'Status', field: 'online', sortable: true }
       ],
       websites: [],
       showWebsiteDialog: false,
       newWebsite: website,
       selectedWebsites: [],
       lastIndex: null
+    }
+  },
+  watch: {
+    selectedTableMode: function (val) {
+      if (val === 'Grid') {
+        this.tableGridMode = true
+        return
+      }
+      this.tableGridMode = false
     }
   },
   methods: {
@@ -156,7 +176,7 @@ var website = {
   name: 'Army Website',
   url: 'army.mil.ng',
   type: 'PING',
-  uptime: 0
+  online: false
 }
 </script>
 

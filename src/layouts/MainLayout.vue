@@ -26,12 +26,7 @@
       content-class="bg-grey-1"
     >
       <q-list>
-        <q-item-label
-          header
-          class="text-grey-8"
-        >
-          Menu
-        </q-item-label>
+        <q-item-label header> Menu</q-item-label>
         <DrawerLink
           v-for="link in essentialLinks"
           :key="link.title"
