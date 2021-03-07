@@ -3,8 +3,8 @@
     <div class="bg-primary">
       <q-toolbar class="q-gutter-md bg-primary text-white" style="margin-right: 100px !important;">
         <div class="q-gutter-x-md">
-          <q-btn round disable size="sm" icon="ion-pause" />
-          <q-btn round disable size="sm" icon="ion-trash" />
+          <q-btn round :disable="notSelected" size="sm" icon="ion-pause" />
+          <q-btn round :disable="notSelected" size="sm" icon="ion-trash" />
         </div>
         <q-select color="grey-3" dense label-color="white" v-model="orderBy" :options="orderByOptions" label="Order by" style="width: 300px;">
           <template v-slot:append>
@@ -34,6 +34,7 @@
     <div class="q-pa-md">
       <q-table
         :grid="tableGridMode ? true : false"
+        :loading="loading"
         ref="websitesTable"
         title="Websites"
         :data="websites"
@@ -71,11 +72,14 @@
         <q-card-section class="q-pt-none">
           <q-input square class='text-white' v-model="newWebsite.name" label="Name" />
           <q-input square v-model="newWebsite.url" label="URL" />
-          <q-input square v-model="newWebsite.type" label="Monitor type" />
+          <q-select square v-model="newWebsite.type" :options="monitorTypeOptions" label="Monitor type" style="width: 300px;" />
         </q-card-section>
 
-        <q-card-actions align="right" class="bg-white text-teal">
-          <q-btn flat label="OK" v-close-popup @click="addNewWebsite" />
+        <q-card-actions align="right" class="text-white bg-primary">
+          <div class="q-gutter-md">
+            <q-btn flat label="OK" v-close-popup @click="addNewWebsite" />
+            <q-btn flat label="CANCEL" v-close-popup />
+          </div>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -83,12 +87,14 @@
 </template>
 
 <script>
+import { getEntries, addEntry, createSchema } from '../helpers/dbUtils'
+
 export default {
   name: 'PageIndex',
   data () {
     return {
       searchText: '',
-      isSelected: false,
+      notSelected: true,
       orderBy: null,
       orderByOptions: [
         'By type', 'By status'
@@ -109,13 +115,19 @@ export default {
           sortable: true
         },
         { name: 'type', label: 'Type', field: 'type', sortable: true },
+        { name: 'updated_at', align: 'center', label: 'Updated', field: 'updated_at', sortable: true },
+        { name: 'created_at', align: 'center', label: 'Created', field: 'created_at', sortable: true },
         { name: 'status', align: 'center', label: 'Status', field: 'online', sortable: true }
       ],
       websites: [],
-      showWebsiteDialog: false,
-      newWebsite: website,
       selectedWebsites: [],
-      lastIndex: null
+      lastIndex: null,
+      showWebsiteDialog: false,
+      loading: false,
+      newWebsite: website,
+      monitorTypeOptions: ['HTTPS', 'PING'],
+      monitorTimer: null,
+      timerInterval: 60000 // In miliseconds (5 seconds)
     }
   },
   watch: {
@@ -129,9 +141,22 @@ export default {
   },
   methods: {
     addNewWebsite: function () {
-      console.log(this.newWebsite)
-      this.websites.push(this.newWebsite)
-      this.newWebsite = { ...website }
+      var obj = this
+      addEntry(this.newWebsite)
+        .then(() => {
+          console.log('added')
+          obj.loadng = false
+          this.websites.push(this.newWebsite)
+          this.newWebsite = { ...website }
+        })
+        .catch((e) => {
+          if (e.name === 'UniqueViolationError') {
+            obj.$q.notify({ message: 'Website URL must be unique', color: 'orange' })
+          }
+          console.log(e.name)
+          obj.$q.notify({ message: 'Entry addition entry failed', color: 'orange' })
+          obj.loadng = false
+        })
     },
     getSelectedString () {
       return this.selectedWebsites.length === 0 ? '' : `${this.selectedWebsites.length} record${this.selectedWebsites.length > 1 ? 's' : ''} selected of ${this.websites.length}`
@@ -139,9 +164,11 @@ export default {
     onWebsiteSelection ({ rows, added, evt }) {
       console.log(this.$refs.websitesTable)
       if (rows.length === 0 || this.$refs.websitesTable === undefined) {
+        this.notSelected = true
         return
       }
 
+      this.notSelected = false
       const row = rows[0]
       const filteredSortedRows = this.$refs.websitesTable.filteredSortedRows
       const rowIndex = filteredSortedRows.indexOf(row)
@@ -188,15 +215,47 @@ export default {
         return 'green'
       }
       return 'red'
+    },
+    updateWebsiteStatus () {
+      console.log('hello')
+    },
+    persistEntry () {
+      addEntry()
+    },
+    updateEntryList () {
+      var obj = this
+      this.loading = true
+      getEntries()
+        .then(entries => {
+          obj.websites = entries
+          obj.loading = false
+        })
     }
+  },
+  mounted () {
+    var obj = this
+    this.$nextTick(function () {
+      // Code that will run only after the
+      // entire view has been rendered
+      obj.updateEntryList()
+      obj.monitorTimer = setInterval(obj.updateWebsiteStatus, obj.timerInterval)
+      createSchema()
+        .then(r => {})
+        .catch(e => {
+          console.error('DB error')
+          console.error(e)
+        })
+    })
   }
 }
 
 var website = {
   name: 'Army Website',
   url: 'army.mil.ng',
-  type: 'PING',
-  online: true
+  type: 'HTTPS',
+  online: false,
+  updated_at: null,
+  created_at: null
 }
 </script>
 

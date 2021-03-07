@@ -69,6 +69,7 @@ module.exports = function (/* ctx */) {
           loader: 'eslint-loader',
           exclude: /node_modules/
         })
+        cfg.externals = {sqlite3: 'commonjs sqlite3'}
       }
     },
 
@@ -98,7 +99,7 @@ module.exports = function (/* ctx */) {
       // directives: [],
 
       // Quasar plugins
-      plugins: []
+      plugins: [ 'Notify' ]
     },
 
     // animations: 'all', // --- includes all animations

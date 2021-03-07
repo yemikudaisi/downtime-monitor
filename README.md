@@ -10,6 +10,7 @@ A quasar framework based app for monitoring website downtime.
 ## Running the application
 
 Downtime Monitor is a node based application so you need to have it installed along with a package manager (npm or yarn)
+
 ### Install the dependencies
 
 ```bash
