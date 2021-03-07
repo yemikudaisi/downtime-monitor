@@ -54,7 +54,11 @@ async function deleteEntry (url) {
   await MonitorEntry.query().delete().where({ url: url })
 }
 
-async function updateEntry (id, field, value) {
+async function updateEntry (entry) {
+  await MonitorEntry.query().patch(entry).where({ id: entry.id })
+}
+
+async function updateEntryField (id, field, value) {
   await MonitorEntry.query().patch({ field: 'value' }).where({ url: id })
 }
 
@@ -79,5 +83,4 @@ async function createSchema () {
   return 'Schema created'
 }
 
-console.log(dbDir)
-export { getEntries, addEntry, deleteEntry, updateEntry, createSchema }
+export { getEntries, addEntry, deleteEntry, updateEntry, updateEntryField, createSchema }

@@ -3,7 +3,7 @@
     <div class="bg-primary">
       <q-toolbar class="q-gutter-md bg-primary text-white" style="margin-right: 100px !important;">
         <div class="q-gutter-x-md">
-          <q-btn round :disable="disableEditAction" size="sm" icon="ion-create" />
+          <q-btn @click="editWebsite" round :disable="disableEditAction" size="sm" icon="ion-create" />
           <q-btn round :disable="disableEntryAction" size="sm" icon="ion-pause" />
           <q-btn round :disable="disableEntryAction" size="sm" icon="ion-trash" />
         </div>
@@ -13,7 +13,7 @@
           </template>
         </q-select>
         <q-space />
-        <q-btn size="md" dense label="Add new" icon="ion-add-circle" @click="showWebsiteDialog = true" />
+        <q-btn size="md" dense label="Add new" icon="ion-add-circle" @click="addWebsite" />
       </q-toolbar>
     </div>
     <q-separator />
@@ -49,12 +49,22 @@
             </div>
             <q-badge color="primary" :label="props.row.url" />
           </q-td>
-      </template>
-      <template v-slot:body-cell-status="props">
-          <q-td :props="props">
-            <q-icon name="ion-radio-button-on" v-bind:color="getStatusColor(props.row.online)" style="font-size: 2em;" />
-          </q-td>
-      </template>
+        </template>
+        <template v-slot:body-cell-status="props">
+            <q-td :props="props">
+              <q-icon name="ion-radio-button-on" v-bind:color="getStatusColor(props.row.online)" style="font-size: 2em;" />
+            </q-td>
+        </template>
+        <template v-slot:body-cell-updated_at="props">
+            <q-td :props="props">
+              {{getFriendlyDate(props.row.updated_at)}}
+            </q-td>
+        </template>
+        <template v-slot:body-cell-created_at="props">
+            <q-td :props="props">
+              {{getFriendlyDate(props.row.updated_at)}}
+            </q-td>
+        </template>
       </q-table>
     </div>
     <div class="q-mt-md">
@@ -74,7 +84,7 @@
 
         <q-card-actions align="right" class="text-white bg-primary">
           <div class="q-gutter-md">
-            <q-btn flat label="OK" v-close-popup @click="addNewWebsite" />
+            <q-btn flat label="OK" v-close-popup @click="saveOrUpdateWebsite" />
             <q-btn flat label="CANCEL" v-close-popup />
           </div>
         </q-card-actions>
@@ -84,8 +94,9 @@
 </template>
 
 <script>
-import { getEntries, addEntry, createSchema } from '../helpers/dbUtils'
+import { getEntries, addEntry, createSchema, updateEntry } from '../helpers/dbUtils'
 import { checkIsUp } from '../helpers/monitorUtils'
+require('datejs')
 
 export default {
   name: 'PageIndex',
@@ -97,6 +108,7 @@ export default {
       tableModeOptions: [
         'Table', 'Grid'
       ],
+      editMode: false,
       tableColumns: [
         {
           name: 'name',
@@ -141,23 +153,39 @@ export default {
     }
   },
   methods: {
-    addNewWebsite: function () {
+    getFriendlyDate: function (datetime) {
+      return new Date(datetime).toString('d MMM yyyy')
+    },
+    saveOrUpdateWebsite: function () {
       var obj = this
-      addEntry(this.newWebsite)
-        .then(() => {
-          console.log('added')
-          obj.loadng = false
-          this.websites.push(this.newWebsite)
-          this.newWebsite = { ...website }
-        })
-        .catch((e) => {
-          if (e.name === 'UniqueViolationError') {
-            obj.$q.notify({ message: 'Website URL must be unique', color: 'orange' })
-            console.log(e.name)
-          }
-          obj.$q.notify({ message: 'Entry addition entry failed', color: 'orange' })
-          obj.loadng = false
-        })
+      if (this.editMode) {
+        updateEntry(this.newWebsite)
+      } else {
+        addEntry(this.newWebsite)
+          .then(() => {
+            console.log('added')
+            obj.loadng = false
+            this.updateEntryList()
+          })
+          .catch((e) => {
+            if (e.name === 'UniqueViolationError') {
+              obj.$q.notify({ message: 'Website URL must be unique', color: 'orange' })
+              console.log(e.name)
+            }
+            obj.$q.notify({ message: 'Entry addition entry failed', color: 'orange' })
+            obj.loadng = false
+          })
+      }
+    },
+    editWebsite: function () {
+      this.editMode = true
+      this.newWebsite = this.selectedWebsites[0]
+      this.showWebsiteDialog = true
+    },
+    addWebsite: function () {
+      this.editMode = false
+      this.newWebsite = { ...website }
+      this.showWebsiteDialog = true
     },
     getSelectedString () {
       return this.selectedWebsites.length === 0 ? '' : `${this.selectedWebsites.length} record${this.selectedWebsites.length > 1 ? 's' : ''} selected of ${this.websites.length}`
@@ -242,11 +270,17 @@ export default {
                 .then(r => {
                   console.log(item.url)
                   console.log(r)
-                }).catch(e => { console.log(item.url) })
+                  item.online = r
+                }).catch(e => {
+                  console.log(e)
+                  console.log(item.url)
+                  item.online = false
+                })
             })
           }, 5000)
           obj.loading = false
         })
+        .catch(e => { console.log(e) })
     }
   },
   mounted () {
@@ -254,22 +288,22 @@ export default {
     this.$nextTick(function () {
       // Code that will run only after the
       // entire view has been rendered
-      obj.updateEntryList()
-      obj.monitorTimer = setInterval(obj.updateWebsiteStatus, obj.timerInterval)
-      createSchema()
-        .then(r => {})
-        .catch(e => {
-          console.error('DB error')
-          console.error(e)
-        })
     })
+    obj.updateEntryList()
+    // obj.monitorTimer = setInterval(obj.updateWebsiteStatus, obj.timerInterval)
+    createSchema()
+      .then(r => {})
+      .catch(e => {
+        console.error('DB error')
+        console.error(e)
+      })
   }
 }
 
 var website = {
-  name: 'Army Website',
-  url: 'army.mil.ng',
-  type: 'HTTPS',
+  name: '',
+  url: '',
+  type: '',
   online: false,
   updated_at: null,
   created_at: null

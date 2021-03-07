@@ -3433,6 +3433,11 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
+datejs@^1.0.0-rc3:
+  version "1.0.0-rc3"
+  resolved "https://registry.yarnpkg.com/datejs/-/datejs-1.0.0-rc3.tgz#bffa1efedefeb41fdd8a242af55afa01fb58de57"
+  integrity sha1-v/oe/t7+tB/diiQq9Vr6AftY3lc=
+
 db-errors@^0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/db-errors/-/db-errors-0.2.3.tgz#a6a38952e00b20e790f2695a6446b3c65497ffa2"
