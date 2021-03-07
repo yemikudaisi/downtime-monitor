@@ -3,14 +3,10 @@
     <div class="bg-primary">
       <q-toolbar class="q-gutter-md bg-primary text-white" style="margin-right: 100px !important;">
         <div class="q-gutter-x-md">
-          <q-btn round :disable="notSelected" size="sm" icon="ion-pause" />
-          <q-btn round :disable="notSelected" size="sm" icon="ion-trash" />
+          <q-btn round :disable="disableEditAction" size="sm" icon="ion-create" />
+          <q-btn round :disable="disableEntryAction" size="sm" icon="ion-pause" />
+          <q-btn round :disable="disableEntryAction" size="sm" icon="ion-trash" />
         </div>
-        <q-select color="grey-3" dense label-color="white" v-model="orderBy" :options="orderByOptions" label="Order by" style="width: 300px;">
-          <template v-slot:append>
-            <q-icon name="ion-reorder" color="white" />
-          </template>
-        </q-select>
         <q-select color="black" dense label-color="white" v-model="selectedTableMode" :options="tableModeOptions" label="Table Mode" style="width: 300px;">
           <template v-slot:append>
             <q-icon name="ion-grid" color="white" />
@@ -44,6 +40,7 @@
         selection="multiple"
         :selected="selectedWebsites"
         @selection="onWebsiteSelection"
+        color="primary"
       >
         <template v-slot:body-cell-name="props">
           <q-td :props="props">
@@ -88,17 +85,13 @@
 
 <script>
 import { getEntries, addEntry, createSchema } from '../helpers/dbUtils'
+import { checkIsUp } from '../helpers/monitorUtils'
 
 export default {
   name: 'PageIndex',
   data () {
     return {
       searchText: '',
-      notSelected: true,
-      orderBy: null,
-      orderByOptions: [
-        'By type', 'By status'
-      ],
       selectedTableMode: 'Table',
       tableGridMode: false,
       tableModeOptions: [
@@ -139,6 +132,14 @@ export default {
       this.tableGridMode = false
     }
   },
+  computed: {
+    disableEntryAction () {
+      return this.selectedWebsites.length <= 0
+    },
+    disableEditAction () {
+      return this.selectedWebsites.length !== 1
+    }
+  },
   methods: {
     addNewWebsite: function () {
       var obj = this
@@ -152,8 +153,8 @@ export default {
         .catch((e) => {
           if (e.name === 'UniqueViolationError') {
             obj.$q.notify({ message: 'Website URL must be unique', color: 'orange' })
+            console.log(e.name)
           }
-          console.log(e.name)
           obj.$q.notify({ message: 'Entry addition entry failed', color: 'orange' })
           obj.loadng = false
         })
@@ -162,13 +163,10 @@ export default {
       return this.selectedWebsites.length === 0 ? '' : `${this.selectedWebsites.length} record${this.selectedWebsites.length > 1 ? 's' : ''} selected of ${this.websites.length}`
     },
     onWebsiteSelection ({ rows, added, evt }) {
-      console.log(this.$refs.websitesTable)
       if (rows.length === 0 || this.$refs.websitesTable === undefined) {
-        this.notSelected = true
         return
       }
 
-      this.notSelected = false
       const row = rows[0]
       const filteredSortedRows = this.$refs.websitesTable.filteredSortedRows
       const rowIndex = filteredSortedRows.indexOf(row)
@@ -216,8 +214,12 @@ export default {
       }
       return 'red'
     },
-    updateWebsiteStatus () {
-      console.log('hello')
+    updateWebsiteStatus (url) {
+      checkIsUp(url)
+        .then(r => {
+          console.log(url)
+          console.log(r)
+        })
     },
     persistEntry () {
       addEntry()
@@ -228,6 +230,21 @@ export default {
       getEntries()
         .then(entries => {
           obj.websites = entries
+          setTimeout(function () {
+            // re-assign online state of websites to offline after
+            obj.websites = obj.websites.map(item => {
+              item.online = false
+              return item
+            })
+            // Check if each website entry is online and update status
+            obj.websites.forEach((item, idx, arr) => {
+              checkIsUp(item.url)
+                .then(r => {
+                  console.log(item.url)
+                  console.log(r)
+                }).catch(e => { console.log(item.url) })
+            })
+          }, 5000)
           obj.loading = false
         })
     }
@@ -260,7 +277,4 @@ var website = {
 </script>
 
 <style scoped>
-.order-select{
-  min-width: 300px;
-}
 </style>
