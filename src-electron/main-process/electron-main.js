@@ -38,7 +38,7 @@ function createWindow () {
   mainWindow.loadURL(process.env.APP_URL)
 
   // Minimizes to system tray
-  mainWindow.on('minimize',function(event){
+  /** mainWindow.on('minimize',function(event){
     event.preventDefault()
     mainWindow.hide()
   });
@@ -63,8 +63,7 @@ function createWindow () {
         application.quit()
     } }
   ])
-  appIcon.setContextMenu(contextMenu)
-
+  appIcon.setContextMenu(contextMenu) */
 }
 
 app.on('ready', createWindow)

@@ -24,27 +24,32 @@ function httpCheckOnline (url, callbackFunc) {
     callbackFunc(false)
   }
 }
-const MonitorType = Object.freeze({ PING: 'PING', HTTPS: 'HTTPS' })
+const MonitorTypes = Object.freeze({ PING: 'PING', HTTPS: 'HTTPS' })
 const MonitorStates = Object.freeze({ ACTIVE: 'ACTIVE', SUSPEND: 'SUSPEND' })
 
 class OnlineMonitor {
-  constructor (websiteList, interval) {
-    this.targets = websiteList
+  constructor (interval) {
+    this.targets = new Map()
     this.pauseState = false
     this.monitorCallback = null
     this.timer = null
+    this.pausedTargets = new Map()
   }
 
-  addWebsite (entry) {
-
+  addWebsite (url, monitorType) {
+    this.targets[url] = monitorType
   }
 
   suspendAll () {
-
+    this.pauseState = true
   }
 
-  suspendOne () {
-
+  suspendOne (url) {
+    try {
+      this.pausedTargets[url] = true
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   start (callbackFunc) {
@@ -53,7 +58,8 @@ class OnlineMonitor {
   }
 
   stop () {
-    clearInterval(this.timer)
+    if (this.timer)
+      clearInterval(this.timer)
   }
 
   restart () {
@@ -66,20 +72,35 @@ class OnlineMonitor {
     this.restart()
   }
 
-  static updateOne (website, checkCallback) {
-    httpCheckOnline(website.url, (r) => {
-      console.log(r)
-      checkCallback(website.url, r)
+  static checkWebsiteHttps (url, checkCallback) {
+    internetAvailable({
+      timeout: 5000, // maximum execution time
+      retries: 2 // fail after five attempts
+    }).then(() => {
+      console.log("Internet available");
+      httpCheckOnline(url, (r) => {
+        console.log(url)
+        checkCallback({ internet: true, url: url, type: MonitorTypes.HTTPS, online: r })
+      })
+    }).catch(() => {
+      console.log("No internet");
+      checkCallback({ internet: false})
     })
   }
 
+  static checkWebsitePing (url, checkCallback) {
+    return `${url} ${checkCallback}`
+  }
+
   loop () {
-    this.targets.forEach(element => {
-      if (element.state !== MonitorStates.SUSPEND) {
-        OnlineMonitor.updateOne(element)
+    this.targets.forEach((value, key) => {
+      if (value === MonitorTypes.HTTPS) {
+        OnlineMonitor.checkWebsiteHttps(key, this.monitorCallback)
+      } else if (value === MonitorTypes.PING) {
+        OnlineMonitor.checkWebsitePing(key, this.monitorCallback)
       }
     })
   }
 }
 
-export { checkIsUp, httpCheckOnline, OnlineMonitor, MonitorType }
+export { checkIsUp, httpCheckOnline, OnlineMonitor, MonitorTypes, MonitorStates }

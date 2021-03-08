@@ -18,6 +18,7 @@
     "core-js": "^3.6.5",
     "datejs": "^1.0.0-rc3",
     "electron-builder": "^22.10.5",
+    "internet-available": "^1.0.0",
     "is-up": "^4.0.0",
     "knex": "^0.95.1",
     "objection": "^2.2.14",

@@ -67,9 +67,6 @@
         </template>
       </q-table>
     </div>
-    <!-- <div class="q-mt-md">
-      Selected: {{ JSON.stringify(selectedWebsites) }}
-    </div> -->
     <q-dialog v-model="showWebsiteDialog" persistent transition-show="scale" transition-hide="scale">
       <q-card style="width: 400px">
         <q-card-section class="bg-primary text-white">
@@ -103,7 +100,7 @@ export default {
   name: 'PageIndex',
   data () {
     return {
-      searchText: '',
+      searchText: '456',
       selectedTableMode: 'Table',
       tableGridMode: false,
       tableModeOptions: [
@@ -154,6 +151,13 @@ export default {
     }
   },
   methods: {
+    showInternetNotification () {
+      this.$q.notify({
+        spinner: true,
+        message: 'No internet.',
+        timeout: 5000
+      })
+    },
     getFriendlyDate: function (datetime) {
       return new Date(datetime).toString('d MMM yyyy')
     },
