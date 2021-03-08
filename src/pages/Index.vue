@@ -67,9 +67,9 @@
         </template>
       </q-table>
     </div>
-    <div class="q-mt-md">
+    <!-- <div class="q-mt-md">
       Selected: {{ JSON.stringify(selectedWebsites) }}
-    </div>
+    </div> -->
     <q-dialog v-model="showWebsiteDialog" persistent transition-show="scale" transition-hide="scale">
       <q-card style="width: 400px">
         <q-card-section class="bg-primary text-white">
@@ -95,8 +95,9 @@
 
 <script>
 import { getEntries, addEntry, createSchema, updateEntry } from '../helpers/dbUtils'
-import { checkIsUp } from '../helpers/monitorUtils'
+import { checkIsUp, httpCheckOnline } from '../helpers/monitorUtils'
 require('datejs')
+const { Notification } = require('electron')
 
 export default {
   name: 'PageIndex',
@@ -266,7 +267,17 @@ export default {
             })
             // Check if each website entry is online and update status
             obj.websites.forEach((item, idx, arr) => {
-              checkIsUp(item.url)
+              httpCheckOnline(item.url, (r) => {
+                console.log(r)
+                item.online = r
+                if (!r) {
+                  const n = new Notification('Website Offline', {
+                    body: `${item.url} is currently offline`
+                  })
+                  n.show()
+                }
+              })
+              /** checkIsUp(item.url)
                 .then(r => {
                   console.log(item.url)
                   console.log(r)
@@ -275,7 +286,7 @@ export default {
                   console.log(e)
                   console.log(item.url)
                   item.online = false
-                })
+                }) */
             })
           }, 5000)
           obj.loading = false

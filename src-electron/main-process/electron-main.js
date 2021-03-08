@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme } from 'electron'
+import { app, BrowserWindow, nativeTheme, Menu, Tray } from 'electron'
 
 try {
   if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -37,9 +37,34 @@ function createWindow () {
 
   mainWindow.loadURL(process.env.APP_URL)
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
-  })
+  // Minimizes to system tray
+  mainWindow.on('minimize',function(event){
+    event.preventDefault()
+    mainWindow.hide()
+  });
+
+  // hide the application when close button is clicked
+  mainWindow.on('close', function (event) {
+    if(!application.isQuiting){
+      event.preventDefault()
+      mainWindow.hide()
+    }
+    return false
+  });
+
+  let appIcon = new Tray()
+
+  var contextMenu = Menu.buildFromTemplate([
+    { label: 'Show App', click:  function(){
+        mainWindow.show()
+    } },
+    { label: 'Quit', click:  function(){
+        application.isQuiting = true
+        application.quit()
+    } }
+  ])
+  appIcon.setContextMenu(contextMenu)
+
 }
 
 app.on('ready', createWindow)
