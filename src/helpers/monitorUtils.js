@@ -1,5 +1,6 @@
 const isUp = require('is-up')
 const internetAvailable = require('internet-available')
+var ping = require('ping')
 
 // Check is a website is online using
 async function checkIsUp (url) {
@@ -100,7 +101,19 @@ class OnlineMonitor {
   }
 
   static checkWebsitePing (url, checkCallback) {
-    return `${url} ${checkCallback}`
+    internetAvailable({
+      timeout: 5000, // maximum execution time
+      retries: 2 // fail after five attempts
+    }).then(() => {
+      ping.promise.probe(url)
+        .then(function (res) {
+          console.log(res)
+          checkCallback({ internet: true, url: url, type: MonitorTypes.PING, online: res })
+        })
+    }).catch(() => {
+      console.log('No internet')
+      checkCallback({ internet: false })
+    })
   }
 
   loop () {

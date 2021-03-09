@@ -304,4 +304,12 @@ var website = {
 </script>
 
 <style scoped>
+.status {
+  animation: blink 0.02s 20 alternate;
+}
+
+@keyframes blink {
+  from { background-color: purple; }
+  to { background-color: red; }
+}
 </style>

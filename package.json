@@ -23,6 +23,7 @@
     "knex": "^0.95.1",
     "node-notifier": "^9.0.0",
     "objection": "^2.2.14",
+    "ping": "^0.4.0",
     "quasar": "^1.0.0",
     "sqlite3": "^5.0.2",
     "vuex": "^3.6.2"
