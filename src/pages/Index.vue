@@ -91,7 +91,7 @@
 </template>
 
 <script>
-import { getEntries, addEntry, createSchema, updateEntry } from '../helpers/dbUtils'
+import { getEntries, addEntry, updateEntry } from '../helpers/dbUtils'
 import { checkIsUp, httpCheckOnline } from '../helpers/monitorUtils'
 require('datejs')
 const { Notification } = require('electron')
@@ -173,9 +173,9 @@ export default {
             this.updateEntryList()
           })
           .catch((e) => {
+            console.log(e)
             if (e.name === 'UniqueViolationError') {
               obj.$q.notify({ message: 'Website URL must be unique', color: 'orange' })
-              console.log(e.name)
             }
             obj.$q.notify({ message: 'Entry addition entry failed', color: 'orange' })
             obj.loadng = false
@@ -299,19 +299,8 @@ export default {
     }
   },
   mounted () {
-    var obj = this
-    this.$nextTick(function () {
-      // Code that will run only after the
-      // entire view has been rendered
-    })
-    obj.updateEntryList()
-    // obj.monitorTimer = setInterval(obj.updateWebsiteStatus, obj.timerInterval)
-    createSchema()
-      .then(r => {})
-      .catch(e => {
-        console.error('DB error')
-        console.error(e)
-      })
+    this.$nextTick(function () {})
+    this.updateEntryList()
   }
 }
 
@@ -319,7 +308,6 @@ var website = {
   name: '',
   url: '',
   type: '',
-  online: false,
   updated_at: null,
   created_at: null
 }

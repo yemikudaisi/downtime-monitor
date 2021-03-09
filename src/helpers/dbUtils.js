@@ -75,7 +75,6 @@ async function createSchema () {
     table.string('url').unique().notNullable()
     table.string('name').notNullable()
     table.string('type').notNullable()
-    table.boolean('online')
     table.timestamp('updated_at')
     table.timestamp('created_at')
   }) // .toSQL().forEach(query => console.log(query.sql))

@@ -27,7 +27,6 @@ class MonitorEntry extends Model {
         url: { type: 'string' },
         name: { type: 'string' },
         type: { type: 'string', minLength: 1, maxLength: 255 },
-        online: { type: 'boolean' },
         updated_at: { type: 'date' }
       }
     }
