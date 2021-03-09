@@ -6,6 +6,7 @@
           <q-btn @click="editWebsite" round :disable="disableEditAction" size="sm" icon="ion-create" />
           <q-btn round :disable="disableEntryAction" size="sm" icon="ion-pause" />
           <q-btn round :disable="disableEntryAction" size="sm" icon="ion-trash" />
+          <q-btn round @click="updateAllOnlineStatus" size="sm" icon="ion-refresh" />
         </div>
         <q-select color="black" dense label-color="white" v-model="selectedTableMode" :options="tableModeOptions" label="Table Mode" style="width: 300px;">
           <template v-slot:append>
@@ -92,7 +93,7 @@
 
 <script>
 import { getEntries, addEntry, updateEntry } from '../helpers/dbUtils'
-import { checkIsUp, httpCheckOnline } from '../helpers/monitorUtils'
+import { httpCheckOnline } from '../helpers/monitorUtils'
 require('datejs')
 const { Notification } = require('electron')
 
@@ -247,53 +248,35 @@ export default {
       }
       return 'red'
     },
-    updateWebsiteStatus (url) {
-      checkIsUp(url)
-        .then(r => {
-          console.log(url)
-          console.log(r)
+    updateAllOnlineStatus () {
+      var obj = this
+      // Check if each website entry is online and update status
+      setTimeout(function () {
+        obj.websites.forEach((item, idx, arr) => {
+          httpCheckOnline(item.url, (r) => {
+            console.log(r)
+            item.online = r
+            if (!r) {
+              const n = new Notification('Website Offline', {
+                body: `${item.url} is currently offline`
+              })
+              n.show()
+            }
+          })
         })
-    },
-    persistEntry () {
-      addEntry()
+      }, 3000)
     },
     updateEntryList () {
       var obj = this
       this.loading = true
       getEntries()
         .then(entries => {
-          obj.websites = entries
-          setTimeout(function () {
-            // re-assign online state of websites to offline after
-            obj.websites = obj.websites.map(item => {
-              item.online = false
-              return item
-            })
-            // Check if each website entry is online and update status
-            obj.websites.forEach((item, idx, arr) => {
-              httpCheckOnline(item.url, (r) => {
-                console.log(r)
-                item.online = r
-                if (!r) {
-                  const n = new Notification('Website Offline', {
-                    body: `${item.url} is currently offline`
-                  })
-                  n.show()
-                }
-              })
-              /** checkIsUp(item.url)
-                .then(r => {
-                  console.log(item.url)
-                  console.log(r)
-                  item.online = r
-                }).catch(e => {
-                  console.log(e)
-                  console.log(item.url)
-                  item.online = false
-                }) */
-            })
-          }, 5000)
+          obj.websites = entries.map(item => {
+            item.online = false
+            return item
+          })
           obj.loading = false
+          obj.updateAllOnlineStatus()
         })
         .catch(e => { console.log(e) })
     }
