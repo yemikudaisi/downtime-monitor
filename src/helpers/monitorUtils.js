@@ -1,4 +1,5 @@
 const isUp = require('is-up')
+const internetAvailable = require('internet-available')
 
 // Check is a website is online using
 async function checkIsUp (url) {
@@ -36,19 +37,30 @@ class OnlineMonitor {
     this.pausedTargets = new Map()
   }
 
-  addWebsite (url, monitorType) {
-    this.targets[url] = monitorType
+  add (url, monitorType) {
+    this.targets.set(url, monitorType)
   }
 
-  suspendAll () {
-    this.pauseState = true
+  addAll (entryList) {
+    entryList.forEach(element => {
+      this.add(element.url, element.type)
+    })
   }
 
-  suspendOne (url) {
+  suspend (url) {
     try {
-      this.pausedTargets[url] = true
+      this.pausedTargets.set(url, true)
     } catch (err) {
       console.log(err)
+    }
+  }
+
+  resume (url) {
+    try {
+      this.pausedTargets.delete(url)
+    } catch (err) {
+      console.log(err)
+      console.log('URL not paused')
     }
   }
 
@@ -58,8 +70,9 @@ class OnlineMonitor {
   }
 
   stop () {
-    if (this.timer)
+    if (this.timer) {
       clearInterval(this.timer)
+    }
   }
 
   restart () {
@@ -77,14 +90,14 @@ class OnlineMonitor {
       timeout: 5000, // maximum execution time
       retries: 2 // fail after five attempts
     }).then(() => {
-      console.log("Internet available");
+      console.log('Internet available')
       httpCheckOnline(url, (r) => {
         console.log(url)
         checkCallback({ internet: true, url: url, type: MonitorTypes.HTTPS, online: r })
       })
     }).catch(() => {
-      console.log("No internet");
-      checkCallback({ internet: false})
+      console.log('No internet')
+      checkCallback({ internet: false })
     })
   }
 
@@ -94,7 +107,7 @@ class OnlineMonitor {
 
   loop () {
     this.targets.forEach((value, key) => {
-      if (value === MonitorTypes.HTTPS) {
+      if (value === MonitorTypes.HTTPS && !this.pausedTargets.has(key)) {
         OnlineMonitor.checkWebsiteHttps(key, this.monitorCallback)
       } else if (value === MonitorTypes.PING) {
         OnlineMonitor.checkWebsitePing(key, this.monitorCallback)
