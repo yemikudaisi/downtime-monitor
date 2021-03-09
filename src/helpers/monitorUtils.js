@@ -10,20 +10,18 @@ function httpCheckOnline (url, callbackFunc) {
   var http = require('https')
   http.globalAgent.options.rejectUnauthorized = false
 
-  try {
-    http.get({ host: url }, function (res) {
-      console.log(url)
-      console.log(res)
-      if (res.statusCode === 200 || res.statusCode === 301) {
-        callbackFunc(true)
-      } else {
-        callbackFunc(false)
-      }
-    })
-  } catch (err) {
-    console.log(err)
+  http.get({ host: url }, function (res) {
+    console.log(url)
+    if (res.statusCode === 200 || res.statusCode === 301) {
+      callbackFunc(true)
+    } else {
+      callbackFunc(false)
+    }
+  }).on('error', function (e) {
+    console.log(url)
+    console.log('error:' + e.message)
     callbackFunc(false)
-  }
+  })
 }
 const MonitorTypes = Object.freeze({ PING: 'PING', HTTPS: 'HTTPS' })
 const MonitorStates = Object.freeze({ ACTIVE: 'ACTIVE', SUSPEND: 'SUSPEND' })
