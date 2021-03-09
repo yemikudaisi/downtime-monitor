@@ -11,7 +11,8 @@
           @click="leftDrawerOpen = !leftDrawerOpen"
         />
 
-        <q-toolbar-title>
+        <q-toolbar-title class="q-gutter-x-md">
+          <q-img  src="../assets/icon-32x32.png" style="height: 32px; max-width: 32px" spinner-color="white"/>
           Downtime Monitor
         </q-toolbar-title>
 

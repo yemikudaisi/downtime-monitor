@@ -95,7 +95,7 @@
 import { getEntries, addEntry, updateEntry } from '../helpers/dbUtils'
 import { httpCheckOnline } from '../helpers/monitorUtils'
 require('datejs')
-const { Notification } = require('electron')
+const notifier = require('node-notifier')
 
 export default {
   name: 'PageIndex',
@@ -250,6 +250,11 @@ export default {
     },
     updateAllOnlineStatus () {
       var obj = this
+      obj.websites = obj.websites.map(item => {
+        item.online = false
+        return item
+      })
+
       // Check if each website entry is online and update status
       setTimeout(function () {
         obj.websites.forEach((item, idx, arr) => {
@@ -257,10 +262,12 @@ export default {
             console.log(r)
             item.online = r
             if (!r) {
-              const n = new Notification('Website Offline', {
-                body: `${item.url} is currently offline`
+              notifier.notify({
+                appID: 'Downtime Monitor',
+                title: 'Website offline',
+                message: `${item.type} check on ${item.name} failed`,
+                icon: '../assets/icon-32x32.png'
               })
-              n.show()
             }
           })
         })
