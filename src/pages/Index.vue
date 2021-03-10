@@ -6,7 +6,7 @@
           <q-btn @click="editWebsite" round :disable="disableEditAction" size="sm" icon="ion-create" />
           <q-btn round :disable="disableEntryAction" size="sm" icon="ion-pause" />
           <q-btn round :disable="disableEntryAction" size="sm" icon="ion-trash" />
-          <q-btn round @click="updateAllOnlineStatus" size="sm" icon="ion-refresh" />
+          <q-btn round @click="initializeStatusMonitor" size="sm" icon="ion-refresh" />
         </div>
         <q-select color="black" dense label-color="white" v-model="selectedTableMode" :options="tableModeOptions" label="Table Mode" style="width: 300px;">
           <template v-slot:append>
@@ -92,8 +92,8 @@
 </template>
 
 <script>
-import { getEntries, addEntry, updateEntry } from '../helpers/dbUtils'
-import { httpCheckOnline } from '../helpers/monitorUtils'
+import { getEntries, addEntry, updateEntry, deleteEntry } from '../helpers/dbUtils'
+import { httpCheckOnline, OnlineMonitor } from '../helpers/monitorUtils'
 require('datejs')
 const notifier = require('node-notifier')
 
@@ -101,6 +101,8 @@ export default {
   name: 'PageIndex',
   data () {
     return {
+      internetStatus: true,
+      monitor: null,
       searchText: '456',
       selectedTableMode: 'Table',
       tableGridMode: false,
@@ -167,6 +169,7 @@ export default {
       if (this.editMode) {
         updateEntry(this.newWebsite)
       } else {
+        delete this.newWebsite.online
         addEntry(this.newWebsite)
           .then(() => {
             console.log('added')
@@ -192,6 +195,12 @@ export default {
       this.editMode = false
       this.newWebsite = { ...website }
       this.showWebsiteDialog = true
+    },
+    deleteWebsite: function () {
+      this.loading = true
+      this.selectedWebsites.forEach(item => {
+        deleteEntry(item.url)
+      })
     },
     getSelectedString () {
       return this.selectedWebsites.length === 0 ? '' : `${this.selectedWebsites.length} record${this.selectedWebsites.length > 1 ? 's' : ''} selected of ${this.websites.length}`
@@ -243,54 +252,73 @@ export default {
       }
     },
     getStatusColor (val) {
+      console.log(val)
       if (val) {
         return 'green'
       }
       return 'red'
     },
-    updateAllOnlineStatus () {
+    initializeStatusMonitor () {
       var obj = this
-      obj.websites = obj.websites.map(item => {
-        item.online = false
-        return item
-      })
 
-      // Check if each website entry is online and update status
       setTimeout(function () {
         obj.websites.forEach((item, idx, arr) => {
+          // run an initial check before monitor's first interval
           httpCheckOnline(item.url, (r) => {
-            console.log(r)
+            console.log(`${item.url} -> online: ${r}`)
             item.online = r
+            obj.$set(obj.websites[idx], 'online', r)
             if (!r) {
-              notifier.notify({
-                appID: 'Downtime Monitor',
-                title: 'Website offline',
-                message: `${item.type} check on ${item.name} failed`,
-                icon: '../assets/icon-32x32.png'
-              })
+              obj.notifyWebsiteStatus(item)
             }
           })
+          obj.monitor.add(item.url, item.type)
         })
+        obj.monitor.start(obj.monitorCallback)
       }, 3000)
+    },
+    monitorCallback (result) {
+      if (!result.internet) {
+        this.showInternetNotification()
+        this.internetStatus = false
+        return
+      }
+      this.internetStatus = true
+      const web = this.websites.find(w => { return (w.url === result.url && w.type === result.type) })
+      web.online = result.online
+
+      console.log(result)
+      if (this.internetStatus && !result.online) {
+        this.notifyWebsiteStatus(web)
+      }
     },
     updateEntryList () {
       var obj = this
       this.loading = true
       getEntries()
         .then(entries => {
-          obj.websites = entries.map(item => {
-            item.online = false
-            return item
+          entries.forEach(e => {
+            e.online = false
           })
+          obj.websites = entries
           obj.loading = false
-          obj.updateAllOnlineStatus()
+          obj.initializeStatusMonitor()
         })
         .catch(e => { console.log(e) })
+    },
+    notifyWebsiteStatus (web) {
+      notifier.notify({
+        appID: 'Downtime Monitor',
+        title: 'Offline alert',
+        message: `${web.type} check on ${web.name} failed`,
+        icon: '../assets/icon-32x32.png'
+      })
     }
   },
   mounted () {
     this.$nextTick(function () {})
     this.updateEntryList()
+    this.monitor = new OnlineMonitor(360000)
   }
 }
 

@@ -12,15 +12,12 @@ function httpCheckOnline (url, callbackFunc) {
   http.globalAgent.options.rejectUnauthorized = false
 
   http.get({ host: url }, function (res) {
-    console.log(url)
     if (res.statusCode === 200 || res.statusCode === 301) {
       callbackFunc(true)
     } else {
       callbackFunc(false)
     }
   }).on('error', function (e) {
-    console.log(url)
-    console.log('error:' + e.message)
     callbackFunc(false)
   })
 }
@@ -34,6 +31,7 @@ class OnlineMonitor {
     this.monitorCallback = null
     this.timer = null
     this.pausedTargets = new Map()
+    this.interval = interval
   }
 
   add (url, monitorType) {
@@ -65,13 +63,21 @@ class OnlineMonitor {
 
   start (callbackFunc) {
     this.monitorCallback = callbackFunc
-    this.timer = setInterval(this.loop, this.interval)
+    var obj = this
+    this.timer = setInterval(function () {
+      console.log(`Monitor Cycle: ${new Date()} \ninterval: ${obj.interval}`)
+      obj.targets.forEach((value, key) => {
+        if (value === MonitorTypes.HTTPS && !obj.pausedTargets.has(key)) {
+          OnlineMonitor.checkWebsiteHttps(key, obj.monitorCallback)
+        } else if (value === MonitorTypes.PING) {
+          OnlineMonitor.checkWebsitePing(key, obj.monitorCallback)
+        }
+      })
+    }, obj.interval)
   }
 
   stop () {
-    if (this.timer) {
-      clearInterval(this.timer)
-    }
+    clearInterval(this.timer)
   }
 
   restart () {
@@ -87,15 +93,12 @@ class OnlineMonitor {
   static checkWebsiteHttps (url, checkCallback) {
     internetAvailable({
       timeout: 5000, // maximum execution time
-      retries: 2 // fail after five attempts
+      retries: 1 // fail after five attempts
     }).then(() => {
-      console.log('Internet available')
       httpCheckOnline(url, (r) => {
-        console.log(url)
         checkCallback({ internet: true, url: url, type: MonitorTypes.HTTPS, online: r })
       })
     }).catch(() => {
-      console.log('No internet')
       checkCallback({ internet: false })
     })
   }
@@ -103,7 +106,7 @@ class OnlineMonitor {
   static checkWebsitePing (url, checkCallback) {
     internetAvailable({
       timeout: 5000, // maximum execution time
-      retries: 2 // fail after five attempts
+      retries: 1 // fail after five attempts
     }).then(() => {
       ping.promise.probe(url)
         .then(function (res) {
@@ -111,18 +114,7 @@ class OnlineMonitor {
           checkCallback({ internet: true, url: url, type: MonitorTypes.PING, online: res })
         })
     }).catch(() => {
-      console.log('No internet')
       checkCallback({ internet: false })
-    })
-  }
-
-  loop () {
-    this.targets.forEach((value, key) => {
-      if (value === MonitorTypes.HTTPS && !this.pausedTargets.has(key)) {
-        OnlineMonitor.checkWebsiteHttps(key, this.monitorCallback)
-      } else if (value === MonitorTypes.PING) {
-        OnlineMonitor.checkWebsitePing(key, this.monitorCallback)
-      }
     })
   }
 }
