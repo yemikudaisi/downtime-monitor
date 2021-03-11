@@ -1,8 +1,6 @@
-// import { app } from 'electron'
 import { remote } from 'electron'
 const path = require('path')
 import MonitorEntry from '../models/MonitorEntry'
-// import Sequelize from 'sequelize'
 
 const app = remote.app
 
@@ -17,15 +15,6 @@ if (!fs.existsSync(appDataDir)) {
   fs.mkdirSync(dbDir)
 }
 
-/** const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: path.join(dbDir, 'database.sqlite')
-});
-
-(async () => {
-  await sequelize.sync()
-})() */
-
 const { Model } = require('objection')
 const Knex = require('knex')
 
@@ -37,6 +26,8 @@ const knex = Knex({
     filename: path.join(dbDir, 'database.sqlite')
   }
 })
+
+console.log(`Database Location: ${path.join(dbDir, 'database.sqlite')}`)
 
 // Give the knex instance to objection.
 Model.knex(knex)
