@@ -1,6 +1,8 @@
 # Downtime Monitor (dmon)
 
-A quasar framework based app for monitoring website downtime.
+A quasar framework based electron app for monitoring website's downtime.
+
+![Screenshot](README/screenshot.PNG)
 
 ## Dependencies
 
