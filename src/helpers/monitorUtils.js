@@ -4,7 +4,7 @@ var ping = require('ping')
 
 // Check is a website is online using
 async function checkIsUp (url) {
-  return await isUp(url)
+  return isUp(url)
 }
 
 function httpCheckOnline (url, callbackFunc) {
