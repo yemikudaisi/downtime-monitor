@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "downtime-monitor",
   "private": true,
   "type": "module",
   "scripts": {
@@ -7,10 +7,12 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "tauri": "tauri dev"
   },
   "dependencies": {
     "nuxt": "^3.11.2",
+    "sass": "^1.75.0",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
   }
