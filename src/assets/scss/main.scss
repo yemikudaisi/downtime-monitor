@@ -5,18 +5,60 @@
 
 $main-bg: #1A1B1E;
 $sidebar-txt-color: #8a96a3;
-$header-color: #ffffff;
+$txt-color-1: #ffffff;
 
 body {
   font-family: "Lato", sans-serif;
 }
 
+// TITLE BAR
+
+.titlebar {
+  background-color: rgba(0, 0, 0, 50%);
+  height: 40px;
+  user-select: none;
+  display: flex;
+  justify-content: flex-end;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  align-items: center;
+  padding-inline: 2px;
+}
+
+.titlebar-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  fill: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  margin-inline: 3px;
+  padding: 0;
+}
+
+.titlebar-button:last-child {
+  margin-right: 6px;
+}
+
+.titlebar-button:hover {
+  background: #303030;
+}
+
+#titlebar-close:hover {
+  background-color: #e06c75;
+}
+
+// SIDE BAR
+
 .sidebar {
   height: 100%;
   width: 58px;
   position: fixed;
-  z-index: 1;
-  top: 0;
+  top: 40px;
   left: 0;
   overflow-x: hidden;
   padding-top: 20px;
@@ -35,12 +77,14 @@ body {
 }
 
 .sidebar-icon-btn:hover{
-  color: white;
+  color: $txt-color-1;
 }
 
 .sidebar a:hover {
   color: #f1f1f1;
 }
+
+// MAIN
 
 .main {
   margin-left: 58px; /* 58px for sidebar */
@@ -53,25 +97,28 @@ body {
 }
 
 .main-header {
-  color: $header-color;
+  color: $txt-color-1;
 }
 
 .btn-primary{
   background-color: #267BAB;
   border: solid 1px #3697CE;
+  cursor: pointer;
   color: white;
-  padding: 10px 20px;
+  padding: 10px 10px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   border-radius: 5px;
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 18px;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1));
 }
 
 .btn-primary > .btn-icon {
   height: 24px;
   width: 24px;
+  margin-right: 5px;
 }
 
 body{
@@ -85,6 +132,7 @@ body{
   border-radius: 5px;
   padding: 20px;
   margin-bottom: 40px;
+  color: $txt-color-1;
 }
 
 /*

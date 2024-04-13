@@ -11,13 +11,13 @@
         <Icon name="heroicons:server-stack" class="sidebar-icon block" />
         </button class="sidebar-icon-btn">
         <span class="h-full"></span>
-        <button class="sidebar-icon-btn absolute bottom-16">
+        <button class="sidebar-icon-btn">
         <Icon
             name="heroicons:information-circle"
             class="sidebar-icon block"
         />
         </button>
-        <button class="sidebar-icon-btn absolute bottom-5">
+        <button class="sidebar-icon-btn">
         <Icon
             name="heroicons:adjustments-horizontal"
             class="sidebar-icon block"

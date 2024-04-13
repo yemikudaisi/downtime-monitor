@@ -1,10 +1,10 @@
 <template>
     <div class="flex-col">
         <div class="flex justify-between">
-            <div><span class="main-header text-2xl text-white">Server Status</span></div>
+            <div><span class="main-header text-2xl text-white">Service Status</span></div>
             <div class="btn-primary"> 
                 <Icon
-                    name="heroicons:plus"
+                    name="heroicons:plus-circle"
                     class="btn-icon block"/>
                 Add Service
             </div>
