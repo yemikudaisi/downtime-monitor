@@ -3,4 +3,21 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   srcDir: "src/",
   ssr: false,
+  telemetry: false,
+  modules: [
+    "@nuxtjs/tailwindcss",
+    "@pinia/nuxt",
+    "@vueuse/nuxt",
+    'radix-vue/nuxt',
+    "@nuxt/eslint",
+    'nuxt-icon'
+  ],
+  eslint: {
+    config: {
+      stylistic: true // <---
+    }
+  },
+  css: [
+    'assets/css/main.css'
+  ]
 })

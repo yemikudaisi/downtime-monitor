@@ -1,5 +1,15 @@
 <template>
-  <div>
-    <h1>Hello World</h1>
-  </div>
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
+
+<script setup>
+import { appWindow } from '@tauri-apps/api/window';
+
+onMounted(() => {
+    setTimeout(() => {
+        appWindow.show();
+    }, 50);
+})
+</script>
