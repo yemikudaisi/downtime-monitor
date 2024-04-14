@@ -20,22 +20,6 @@ export const db = {
 
       },
       {
-        name: "Service 3",
-        host: "192.3.4.14:3000",
-        status: ServiceStatus.Online,
-        statusDuration: "2024-01-01T00:00:00Z",
-        lastChecked: "2024-04-14T13:08:31Z",
-
-      },
-      {
-        name: "Service 4",
-        host: "192.3.4.14:3000",
-        status: ServiceStatus.Online,
-        statusDuration: "2024-01-01T00:00:00Z",
-        lastChecked: "2024-04-14T13:08:31Z",
-
-      },
-      {
         name: "Service 5",
         host: "192.3.4.14:3000",
         status: ServiceStatus.Online,
@@ -57,23 +41,6 @@ export const db = {
         status: ServiceStatus.Offline,
         statusDuration: "2024-01-01T00:00:00Z",
         lastChecked: "2024-04-14T13:08:31Z",
-
-      },
-      {
-        name: "Service 7",
-        host: "192.3.4.14:3000",
-        status: ServiceStatus.Online,
-        statusDuration: "2024-01-01T00:00:00Z",
-        lastChecked: "2024-04-14T13:08:31Z",
-
-      },
-      {
-        name: "Service 8",
-        host: "192.3.4.14:3000",
-        status: ServiceStatus.Online,
-        statusDuration: "2024-01-01T00:00:00Z",
-        lastChecked: "2024-04-14T13:08:31Z",
-
       }
     ]
   }

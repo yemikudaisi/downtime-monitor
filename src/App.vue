@@ -12,6 +12,7 @@
 <script setup>
 import "~/assets/scss/main.scss";
 import { appWindow } from "@tauri-apps/api/window";
+import "vue-data-ui/style.css"
 
 onMounted(() => {
   setTimeout(() => {

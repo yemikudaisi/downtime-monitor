@@ -14,6 +14,9 @@ dependencies:
   '@pinia/nuxt':
     specifier: ^0.5.1
     version: 0.5.1(typescript@5.4.5)(vue@3.4.21)
+  dayjs:
+    specifier: ^1.11.10
+    version: 1.11.10
   mitt:
     specifier: ^3.0.1
     version: 3.0.1
@@ -35,6 +38,9 @@ dependencies:
   vue:
     specifier: ^3.4.21
     version: 3.4.21(typescript@5.4.5)
+  vue-data-ui:
+    specifier: ^2.0.84
+    version: 2.0.84
   vue-router:
     specifier: ^4.3.0
     version: 4.3.0(vue@3.4.21)
@@ -7939,6 +7945,10 @@ packages:
     resolution: {integrity: sha512-oYATTQyh8XVkUWe2kaKxhxKVuuzK2Qcehe+yr3bGiaQAhK3ry2kYE4FWOfL+KO3hVFwCdLmzDQTzYhTi9C+R2A==}
     dependencies:
       ufo: 1.5.3
+
+  /vue-data-ui@2.0.84:
+    resolution: {integrity: sha512-bgvMKSJZvWBtfwpBKaFcOWhet9StTXzPJ+GP3DRe2011l02ChlCRuS0RLhlHxZAcwiiQixwygKJgkxpmn2wV4Q==}
+    dev: false
 
   /vue-demi@0.14.7(vue@3.4.21):
     resolution: {integrity: sha512-EOG8KXDQNwkJILkx/gPcoL/7vH+hORoBaKgGe+6W7VFMvCYJfmF2dGbvgDroVnI8LU7/kTu8mbjRZGBU1z9NTA==}
