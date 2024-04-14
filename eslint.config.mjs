@@ -6,12 +6,19 @@ export default withNuxt(
     plugins: ["tailwindcss", "perfectionist"],
     root: true,
     rules: {
-        "indent": ["warn", 4],
         "no-undef": "off",
         "perfectionist/sort-vue-attributes": "off",
         "tailwindcss/no-custom-classname": "off",
-        "vue/html-indent": ["warn", 4],
+        "vue/html-indent": ["warn", 2],
+        "indent": ["warn", 2]
         "vue/multi-word-component-names": "off",
-        "vue/v-on-event-hyphenation": "off"
+        "vue/v-on-event-hyphenation": "off",
+        "@typescript-eslint/quotes": [
+          "error",
+          "single",
+          {
+            "allowTemplateLiterals": true
+          }
+        ]
     }
 )

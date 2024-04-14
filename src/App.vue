@@ -1,7 +1,7 @@
 <template>
   <div class="relative">
     <Titlebar />
-    <div class="absolute relative top-10">
+    <div class="relative w-full top-10">
       <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

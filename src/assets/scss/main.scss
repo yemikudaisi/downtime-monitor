@@ -2,23 +2,77 @@
 @tailwind components;
 @tailwind utilities;
 
+// Change theme
+// https://stackoverflow.com/questions/62904683/how-are-themes-implemented-in-css#:~:text=You%20can%20define%20these%20variables,to%20apply%20a%20different%20theme.
 
-$main-bg: #1A1B1E;
-$sidebar-txt-color: #8a96a3;
+$main-bg: #14171a;
 $txt-color-1: #ffffff;
+$txt-color-2: #8a96a3;
+$card-bg: #1c2024;
+$card-border: solid 1px #30363b;
+$sidebar-gb: #24292e;
+$sidebar-border: solid 1px #4a555f;
+$bg-primary: #84C92D;
+$border-primary: #C8FF84;
+$bg-danger: #C92D37;
+$border-danger: #FF84B0;
+$bg-warning: #F4A242;
+$border-warning: FFD584;
+
+// UTILITIES
+
+.bg-primary{
+  border: solid 1px $border-primary;
+  background-color: $bg-primary;
+}
+.bg-danger{
+  border: solid 1px $border-danger;
+  background-color: $bg-danger;
+}
+.bg-warning{
+  border: solid 1px $border-warning;
+  background-color: $bg-warning;
+}
+.txt-color-1{
+  color: $txt-color-1
+}
+
+.txt-color-2{
+  color: $txt-color-2
+}
+
+.status-indicator{
+  border-radius: 5px;
+  width: 10px;
+  height: 10px;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  src: url('/fonts/Rubik-VariableFont_wght.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 body {
-  font-family: "Lato", sans-serif;
+  font-family: "Rubik", "Lato", sans-serif;
+  @apply text-base;
+}
+
+html, body {
+  background-color: rgba(20, 23, 26, 10%);
+  height: 100%;
+  overflow: hidden;
 }
 
 // TITLE BAR
 
 .titlebar {
-  background-color: rgba(0, 0, 0, 50%);
+  background-color: $main-bg;
   height: 40px;
   user-select: none;
   display: flex;
-  justify-content: flex-end;
   position: fixed;
   top: 0;
   left: 0;
@@ -26,13 +80,20 @@ body {
   z-index: 1000;
   align-items: center;
   padding-inline: 2px;
+  border-bottom: $sidebar-border;
+  @apply justify-between;
+}
+
+.titlebar > .title {
+  color: $txt-color-1;
+  margin-left: 10px;
 }
 
 .titlebar-button {
   display: flex;
   justify-content: center;
   align-items: center;
-  fill: white;
+  fill: $txt-color-1;
   width: 32px;
   height: 32px;
   border-radius: 3px;
@@ -53,19 +114,17 @@ body {
 }
 
 // SIDE BAR
-
+$side-bar-w: 58px;
 .sidebar {
   height: 100%;
-  width: 58px;
+  width: $side-bar-w;
   position: fixed;
-  top: 40px;
   left: 0;
   overflow-x: hidden;
   padding-top: 20px;
-  background-color: #24292e;
-  border-right: solid 1px #4a555f;
+  background-color: $sidebar-gb;
+  border-right: $sidebar-border;
 }
-
 
 .sidebar-icon {
   width: 30px;
@@ -73,7 +132,7 @@ body {
 }
 
 .sidebar-icon-btn{
-  color: $sidebar-txt-color;
+  color: $txt-color-2;
 }
 
 .sidebar-icon-btn:hover{
@@ -81,19 +140,20 @@ body {
 }
 
 .sidebar a:hover {
-  color: #f1f1f1;
+  color: $txt-color-1;
 }
 
 // MAIN
 
 .main {
-  margin-left: 58px; /* 58px for sidebar */
-  font-size: 28px; /* Increased text to enable scrolling */
-  padding-left: 40px;
-  padding-right: 40px;
+  margin-left: $side-bar-w;
+  font-size: 16px;
+  padding-left: 64px;
+  padding-right: 64px;
   padding-top: 20px;
   padding-bottom: 0;
   background: $main-bg;
+  overflow-y: auto;
 }
 
 .main-header {
@@ -126,13 +186,11 @@ body{
 }
 
 .server-status-card{
-  background-color: #25262B;
-  border: solid 1px #1E2022;
+  background-color: $card-bg;
+  border: $card-border;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1));
   border-radius: 5px;
-  padding: 20px;
-  margin-bottom: 40px;
-  color: $txt-color-1;
+  padding: 36px 64px;
 }
 
 /*
