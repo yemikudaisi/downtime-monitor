@@ -9,7 +9,7 @@
         Add Service
       </div>
     </div>
-    <div class="flex flex-wrap mt-5 h-full gap-10">
+    <div class="flex flex-wrap mt-5 h-full gap-10 justify-center">
       <StatusCard v-for="item in home.items" :service="item" />
     </div>
   </div>

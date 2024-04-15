@@ -11,15 +11,33 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false,
+      "all": true,
+      "fs": {
+        "scope": [
+          "**",
+          "$HOME/*",
+          "$APPDATA/*",
+          "$APPDATA/extensions/*",
+          "$APPDATA/databases/*",
+          "$APPCONFIG/*",
+          "$RESOURCE/*"
+        ],
+        "all": true
+      },
       "window": {
+        "all": true
+      },
+      "path": {
+        "all": true
+      },
+      "shell": {
         "all": true
       }
     },
     "bundle": {
       "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
+      "category": "ServerTool",
+      "copyright": "© 2020-2024 Scarlet (hello@scarlet.dev)",
       "deb": {
         "depends": []
       },
@@ -32,7 +50,7 @@
         "icons/icon.ico"
       ],
       "identifier": "app.dtmon",
-      "longDescription": "",
+      "longDescription": "Network services status monitoring tool",
       "macOS": {
         "entitlements": null,
         "exceptionDomain": "",
@@ -58,10 +76,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
+        "height": 800,
         "resizable": true,
         "title": "Downtime Monitor",
-        "width": 800,
+        "width": 1200,
         "decorations": false,
         "transparent": true
       }

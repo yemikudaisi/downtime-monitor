@@ -13,6 +13,10 @@
 import "~/assets/scss/main.scss";
 import { appWindow } from "@tauri-apps/api/window";
 import "vue-data-ui/style.css"
+import { App } from "./core/App";
+
+const app = new App();
+app.start();
 
 onMounted(() => {
   setTimeout(() => {

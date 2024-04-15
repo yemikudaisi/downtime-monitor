@@ -80,7 +80,7 @@ html, body {
   z-index: 1000;
   align-items: center;
   padding-inline: 2px;
-  border-bottom: $sidebar-border;
+  border: $sidebar-border;
   @apply justify-between;
 }
 
@@ -124,6 +124,7 @@ $side-bar-w: 58px;
   padding-top: 20px;
   background-color: $sidebar-gb;
   border-right: $sidebar-border;
+  border-left: $sidebar-border;
 }
 
 .sidebar-icon {
@@ -183,6 +184,7 @@ $side-bar-w: 58px;
 
 body{
   background: $main-bg;
+  border: $sidebar-border;
 }
 
 .server-status-card{
@@ -192,6 +194,30 @@ body{
   border-radius: 5px;
   padding: 36px 64px;
   width: 500px;
+}
+
+.btn-status-card > svg{
+  margin-top: 0px;
+  padding: 0px 2px;
+  font-size: 24px;
+}
+
+.btn-status-card > svg:hover {
+  color: $txt-color-1;
+  cursor: pointer;
+
+}
+
+.tag {
+  border: solid 1px white;
+  align-items:  center;
+  justify-items: center;
+  height: 24px;
+  font-size: 12px;
+  padding: 2px 4px;
+  background-color: $main-bg;
+  border: $card-border;
+  color: $txt-color-2;
 }
 
 /*
