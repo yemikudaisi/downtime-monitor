@@ -1,7 +1,7 @@
 
 export interface Service {
   name: string;
-  host: string;
+  connectionString: string;
   enabled: boolean;
   serviceIdentifier: string;
 }
