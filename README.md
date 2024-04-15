@@ -6,4 +6,4 @@ A desktop app for monitoring networked sservice (e.g website's, email) downtime.
 
 ## Dependencies
 
-- [Tauri Apps](https://quasar.dev/)
+- [Tauri Apps](https://tauri.app/)

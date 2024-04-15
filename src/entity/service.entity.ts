@@ -8,7 +8,7 @@ export class Service extends AbstractEntity {
   name!: string;
 
   @Column({nullable: false})
-  host!: string;
+  connectionString!: string;
 
   @Column({nullable: false})
   enabled!: boolean;

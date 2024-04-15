@@ -11,7 +11,7 @@ export abstract class AppExtension<T> implements ServiceStatusChecker {
   constructor(app: T) {
     this.app = app;
   }
-  abstract check(host: Service): Promise<boolean>;
+  abstract check(service: Service): Promise<boolean>;
   abstract start(): Promise<void>;
   abstract stop(): Promise<void>;
 }
