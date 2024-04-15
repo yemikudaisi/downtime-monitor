@@ -1,5 +1,6 @@
 import { readDir, BaseDirectory } from '@tauri-apps/api/fs';
 import * as path from '@tauri-apps/api/path';
+import * as http from "@tauri-apps/api/http"
 import { AppExtension } from '../types/api/AppExtension';
 import { convertFileSrc } from '@tauri-apps/api/tauri';
 
@@ -34,7 +35,10 @@ export class ExtensionManager<T> {
     console.log('>>>>>>>>>>>>>>>>>>loading dir <<<<<<<<<<<<<<<');
     console.log(files)
     for (let file of files) {
-      let Extension = await import(file.path);
+      const response = await http.fetch(convertFileSrc(file.path))
+      const jsCode = await response.data as string;
+      let Extension = await import(`data:text/javascript;base64,${btoa(jsCode)}`);
+      //let Extension = await import(convertFileSrc(file.path));
       let plugin = new Extension(app);
       await this.load(Extension as AppExtension<T>);
     }
