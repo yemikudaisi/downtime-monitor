@@ -1,24 +1,26 @@
 <template>
-  <div id="q-app">
-    <router-view />
+  <div class="relative">
+    <Titlebar />
+    <div class="relative w-full top-10">
+      <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+    </div>
   </div>
 </template>
-<script>
-import store from './store'
-import { createSchema } from './helpers/dbUtils'
 
-export default {
-  name: 'App',
-  store,
-  created: function () {
-    console.log('vm created')
-    // console.log(`KNEX POOL -> free: ${getPool().numUsed()}, used: ${getPool().numFree()}`)
-    createSchema()
-      .then(r => {})
-      .catch(e => {
-        console.error('DB error')
-        console.error(e)
-      })
-  }
-}
+<script setup>
+import "~/assets/scss/main.scss";
+import { appWindow } from "@tauri-apps/api/window";
+import "vue-data-ui/style.css"
+import { App } from "./core/App";
+
+const app = new App();
+app.start();
+
+onMounted(() => {
+  setTimeout(() => {
+    appWindow.show();
+  }, 50);
+});
 </script>

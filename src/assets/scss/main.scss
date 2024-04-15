@@ -1,0 +1,268 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Change theme
+// https://stackoverflow.com/questions/62904683/how-are-themes-implemented-in-css#:~:text=You%20can%20define%20these%20variables,to%20apply%20a%20different%20theme.
+
+$main-bg: #14171a;
+$txt-color-1: #ffffff;
+$txt-color-2: #8a96a3;
+$card-bg: #1c2024;
+$card-border: solid 1px #30363b;
+$sidebar-gb: #24292e;
+$sidebar-border: solid 1px #4a555f;
+$bg-primary: #84C92D;
+$border-primary: #C8FF84;
+$bg-danger: #C92D37;
+$border-danger: #FF84B0;
+$bg-warning: #F4A242;
+$border-warning: FFD584;
+
+// UTILITIES
+
+.bg-primary{
+  border: solid 1px $border-primary;
+  background-color: $bg-primary;
+}
+.bg-danger{
+  border: solid 1px $border-danger;
+  background-color: $bg-danger;
+}
+.bg-warning{
+  border: solid 1px $border-warning;
+  background-color: $bg-warning;
+}
+.txt-color-1{
+  color: $txt-color-1
+}
+
+.txt-color-2{
+  color: $txt-color-2
+}
+
+.status-indicator{
+  border-radius: 5px;
+  width: 10px;
+  height: 10px;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  src: url('/fonts/Rubik-VariableFont_wght.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: "Rubik", "Lato", sans-serif;
+  @apply text-base;
+}
+
+html, body {
+  background-color: rgba(20, 23, 26, 10%);
+  height: 100%;
+  overflow: hidden;
+}
+
+// TITLE BAR
+
+.titlebar {
+  background-color: $main-bg;
+  height: 40px;
+  user-select: none;
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  align-items: center;
+  padding-inline: 2px;
+  border: $sidebar-border;
+  @apply justify-between;
+}
+
+.titlebar > .title {
+  color: $txt-color-1;
+  margin-left: 10px;
+}
+
+.titlebar-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  fill: $txt-color-1;
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  margin-inline: 3px;
+  padding: 0;
+}
+
+.titlebar-button:last-child {
+  margin-right: 6px;
+}
+
+.titlebar-button:hover {
+  background: #303030;
+}
+
+#titlebar-close:hover {
+  background-color: #e06c75;
+}
+
+// SIDE BAR
+$side-bar-w: 58px;
+.sidebar {
+  height: 100%;
+  width: $side-bar-w;
+  position: fixed;
+  left: 0;
+  overflow-x: hidden;
+  padding-top: 20px;
+  background-color: $sidebar-gb;
+  border-right: $sidebar-border;
+  border-left: $sidebar-border;
+}
+
+.sidebar-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.sidebar-icon-btn{
+  color: $txt-color-2;
+}
+
+.sidebar-icon-btn:hover{
+  color: $txt-color-1;
+}
+
+.sidebar a:hover {
+  color: $txt-color-1;
+}
+
+// MAIN
+
+.main {
+  margin-left: $side-bar-w;
+  font-size: 16px;
+  padding-left: 64px;
+  padding-right: 64px;
+  padding-top: 20px;
+  padding-bottom: 0;
+  background: $main-bg;
+  overflow-y: auto;
+}
+
+.main-header {
+  color: $txt-color-1;
+}
+
+.btn-primary{
+  background-color: #267BAB;
+  border: solid 1px #3697CE;
+  cursor: pointer;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  border-radius: 5px;
+  font-size: 12px;
+  line-height: 18px;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1));
+}
+
+.btn-primary > .btn-icon {
+  height: 24px;
+  width: 24px;
+  margin-right: 5px;
+}
+
+body{
+  background: $main-bg;
+  border: $sidebar-border;
+}
+
+.server-status-card{
+  background-color: $card-bg;
+  border: $card-border;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1));
+  border-radius: 5px;
+  padding: 36px 64px;
+  width: 500px;
+}
+
+.btn-status-card > svg{
+  margin-top: 0px;
+  padding: 0px 2px;
+  font-size: 24px;
+}
+
+.btn-status-card > svg:hover {
+  color: $txt-color-1;
+  cursor: pointer;
+
+}
+
+.tag {
+  border: solid 1px white;
+  align-items:  center;
+  justify-items: center;
+  height: 24px;
+  font-size: 12px;
+  padding: 2px 4px;
+  background-color: $main-bg;
+  border: $card-border;
+  color: $txt-color-2;
+}
+
+/*
+  1. Use a more-intuitive box-sizing model.
+*/
+*, *::before, *::after {
+    box-sizing: border-box;
+  }
+  /*
+    2. Remove default margin
+  */
+  * {
+    margin: 0;
+  }
+  /*
+    Typographic tweaks!
+    3. Add accessible line-height
+    4. Improve text rendering
+  */
+  body {
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  /*
+    5. Improve media defaults
+  */
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+  }
+  /*
+    6. Remove built-in form typography styles
+  */
+  input, button, textarea, select {
+    font: inherit;
+  }
+  /*
+    7. Avoid text overflows
+  */
+  p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+  }
+  /*
+    8. Create a root stacking context
+  */
+  #root, #__next {
+    isolation: isolate;
+  }

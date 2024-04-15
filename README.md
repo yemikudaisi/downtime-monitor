@@ -1,42 +1,9 @@
 # Downtime Monitor (dmon)
 
-A quasar framework based electron app for monitoring website's downtime.
+A desktop app for monitoring networked sservice (e.g website's, email) downtime. Previously developed in Electron, it is not beinf developed as a Tauri app. Note that the current version os a work in progress and not fit for use.
 
-![Screenshot](README/screenshot.PNG)
+![Screenshot](docs/screenshot-1.png)
 
 ## Dependencies
 
-- [Quasar](https://quasar.dev/)
-- [is-up](github.com/sindresorhus/is-up)
-
-## Running the application
-
-Downtime Monitor is a node based application so you need to have it installed along with a package manager (npm or yarn)
-
-### Install the dependencies
-
-```bash
-yarn
-```
-
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
-
-```bash
-quasar dev
-```
-
-### Lint the files
-
-```bash
-yarn run lint
-```
-
-### Build the app for production
-
-```bash
-quasar build
-```
-
-### Customize the configuration
-
-See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
+- [Tauri Apps](https://quasar.dev/)
