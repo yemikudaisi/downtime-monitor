@@ -49,7 +49,7 @@ export default class SmtpExtension extends AppExtension<App> {
   async start(): Promise<void> {
     //const cs = 'smtp://user:password@emailcom:587?secure=1';
     //const cs = 'smtp://mpe9bfhdqyrmiaq:g5mxkuqtf84luw24enqhrh6e9pvl4a@tempmail.us.com:?secure=1';
-    const cs = 'server:25';
+    const cs = 'smtp.freesmtpservers.com25';
     const res = await this.verify({
       name: 'Service 1',
       connectionString: cs,
@@ -63,5 +63,4 @@ export default class SmtpExtension extends AppExtension<App> {
     console.log('SMTP Extension stopped');
     await new Promise(() => { });
   }
-
 }

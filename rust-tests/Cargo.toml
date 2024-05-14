@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 lettre = "0.11.7"
+reqwest = "0.12.4"
 serde = { version="1.0.201", features = ["derive"]}
+tokio = { version = "1.37.0", features = ["full"] }
