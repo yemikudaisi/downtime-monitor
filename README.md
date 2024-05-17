@@ -12,4 +12,4 @@ A cross-platform desktop app for monitoring network services (e.g website's, ema
 - [ ] Monitor Website Status
 - [ ] Monitor SSL Expiry
 - [ ] Monitor SMTP
-- [ ]Support Extensions (Possibly via [RhaiScript](https://rhai.rs/) or [Python](https://www.python.org/))
+- [ ] Support Extensions (possibly with [RhaiScript](https://rhai.rs/) or [Python](https://www.python.org/))
