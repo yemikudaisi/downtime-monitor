@@ -25,17 +25,23 @@ export default class SmtpExtension extends AppExtension<App> {
    */
   async verify(service: Service): Promise<ServiceVerificationResult | undefined> {
     const connectionObject = new ConnectionString(service.connectionString);
+    console.log(connectionObject);
     const hosts = connectionObject.hosts;
-    if (!connectionObject.hosts || connectionObject.hosts?.length < 1 || !connectionObject.hosts[0].name || !connectionObject.user || !connectionObject.password) {
+    if (
+      !connectionObject.hosts &&
+      connectionObject.hosts?.length < 1 &&
+      !connectionObject.hosts[0].name &&
+      !connectionObject.user &&
+      !connectionObject.password) {
       throw new ConnectionStringException(`Connection string must follow the format "protocol://user:password@host1:123?secure=1"`);
     }
 
     const smtpConfig: SmtpConfig = {
       host: connectionObject.hosts[0].name,
       port: connectionObject.hosts[0].port || 587,
-      secure: ((connectionObject.params?.secure)? true: false),
-      user: connectionObject.user,
-      pass: connectionObject.password
+      secure: ((connectionObject.params?.secure) ? true : false),
+      user: connectionObject.user || '',
+      pass: connectionObject.password || ''
     };
 
     console.log(smtpConfig);
@@ -49,7 +55,7 @@ export default class SmtpExtension extends AppExtension<App> {
   async start(): Promise<void> {
     //const cs = 'smtp://user:password@emailcom:587?secure=1';
     //const cs = 'smtp://mpe9bfhdqyrmiaq:g5mxkuqtf84luw24enqhrh6e9pvl4a@tempmail.us.com:?secure=1';
-    const cs = 'smtp.freesmtpservers.com25';
+    const cs = 'smtp.freesmtpservers.com:25';
     const res = await this.verify({
       name: 'Service 1',
       connectionString: cs,
