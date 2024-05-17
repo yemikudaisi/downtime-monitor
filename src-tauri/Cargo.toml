@@ -20,6 +20,9 @@ serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.6.1", features = [ "api-all"] }
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 window-vibrancy = "0.4.0"
+lettre = "0.11.6"
+diesel = "2.1.6"
+dotenv = "0.15.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

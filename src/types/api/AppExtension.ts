@@ -1,9 +1,10 @@
 import type { ServiceIdentifier } from './ServiceIdentifier';
-import type { ServiceStatusChecker } from './ServiceStatusChecker';
+import type { ServiceStatusVerifier } from './service-status-verifier';
 import type { Service } from './Service';
+import type { ServiceVerificationResult } from './service-verification-result';
 
 
-export abstract class AppExtension<T> implements ServiceStatusChecker {
+export abstract class AppExtension<T> implements ServiceStatusVerifier {
   abstract identity: string;
   abstract label: string;
   abstract version: string;
@@ -11,7 +12,7 @@ export abstract class AppExtension<T> implements ServiceStatusChecker {
   constructor(app: T) {
     this.app = app;
   }
-  abstract check(service: Service): Promise<boolean>;
+  abstract verify(service: Service): Promise<ServiceVerificationResult | undefined>;
   abstract start(): Promise<void>;
   abstract stop(): Promise<void>;
 }
