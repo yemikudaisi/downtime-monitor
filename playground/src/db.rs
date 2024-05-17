@@ -65,6 +65,30 @@ pub fn insert_service(service: &ServiceConfig) -> i64 {
     res
 }
 
+pub fn get_service_config_id(id: i64) -> rusqlite::Result<ServiceConfig> {
+    let conn = get_connection();
+    let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout
+                 FROM services
+                 WHERE id = ?1";
+
+    let row = conn.query_row(query, params![id], |row| {
+        Ok(ServiceConfig {
+            id: Some(row.get(0)?),
+            name: row.get(1)?,
+            description: row.get(2)?,
+            host: row.get(3)?,
+            port: row.get(4)?,
+            secure: Some(row.get::<_, String>(5)? == "true"), //.to_string() == "true" { Some(true) } else { Some(false) } ,
+            user: row.get(6)?,
+            pass: row.get(7)?,
+            interval: row.get(8)?,
+            retry_interval: row.get(9)?,
+            interval_timeout: row.get(10)?,
+        })
+    });
+    row
+}
+
 fn update_service_config( service: &ServiceConfig){
     let conn = get_connection();
     conn.execute(

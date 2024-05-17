@@ -3,58 +3,30 @@
 mod core;
 mod db;
 use core::{services, types};
+use serde_json::Result;
 use tokio;
 
 #[tokio::main]
 async fn main() {
     db::init();
-    let config = types::ServiceConfig {
-        id: None,
-        name: "Service 2".to_string(),
-        description: "My service 2".to_string(),
-        host: "localhost".to_string(),
-        port: 8080,
-        secure: Some(true),
-        user: Some("admin".to_string()),
-        pass: Some("".to_string()),
-        interval: Some(1000),
-        retry_interval: Some(5000),
-        interval_timeout: Some(3000),
-    };
-
-    let res = db::insert_service(&config);
-    println!("Last inserted ID {}", res);
-    println!("Terminated");
-
-    // println!("Hello, world!");
-    // let smtp_config = types::ServiceConfig {
-    //     host: String::from("smtp.freesmtpservers.com"),
-    //     port: 25,
-    //     ..Default::default()
+    // let config = types::ServiceConfig {
+    //     id: None,
+    //     name: "Service 2".to_string(),
+    //     description: "My service 2".to_string(),
+    //     host: "localhost".to_string(),
+    //     port: 8080,
+    //     secure: Some(true),
+    //     user: Some("admin".to_string()),
+    //     pass: Some("".to_string()),
+    //     interval: Some(1000),
+    //     retry_interval: Some(5000),
+    //     interval_timeout: Some(3000),
     // };
-    // let result = services::verify_smtp(&smtp_config);
-    // match result.success {
-    //     true => {
-    //         println!("Success: {}", result.message)
-    //     }
-    //     false => {
-    //         println!("Failed: {}", result.message)
-    //     }
-    // }
 
-    let website_config = types::ServiceConfig {
-        host: String::from("https://www.army.mil.ng"),
-        port: 80,
-        ..Default::default()
-    };
-
-    let result = services::verify_website(&website_config).await;
-    match result.success {
-        true => {
-            println!("Website > Success: {}", result.message)
-        }
-        false => {
-            println!("Website > Failed: {}", result.message)
-        }
-    }
+    // let res = db::insert_service(&config);
+    // println!("Last inserted ID {}", res);
+    // println!("Terminated");
+    let res = db::get_service_config_id(1).unwrap();
+    // let deserialized = serde_json::to_string(res);
+    println!("{:?}", serde_json::to_string(&res).unwrap());
 }
