@@ -1,9 +1,15 @@
-# Downtime Monitor (dmon)
+# Downtime Monitor (Nettus)
 
-A desktop app for monitoring networked sservice (e.g website's, email) downtime. Previously developed in Electron, it is not beinf developed as a Tauri app. Note that the current version os a work in progress and not fit for use.
+A cross-platform desktop app for monitoring network services (e.g website's, email) up time. Desgined for display in small server room monitoring where visual/sound notification takes precedence. Previously developed in Electron, it is now being developed as a Tauri app. Note that the current version is a work in progress and not fit for use.
 
 ![Screenshot](docs/screenshot-1.png)
 
 ## Dependencies
 
 - [Tauri Apps](https://tauri.app/)
+
+## Road Map
+- [ ] Monitor Website Status
+- [ ] Monitor SSL Expiry
+- [ ] Monitor SMTP
+- [ ]Support Extensions (Possibly via [RhaiScript](https://rhai.rs/) or [Python](https://www.python.org/))
