@@ -9,8 +9,9 @@ use tokio;
 async fn main() {
     db::init();
     let config = types::ServiceConfig {
-        name: "My Service".to_string(),
-        description: "A sample service".to_string(),
+        id: None,
+        name: "Service 2".to_string(),
+        description: "My service 2".to_string(),
         host: "localhost".to_string(),
         port: 8080,
         secure: Some(true),
@@ -22,6 +23,8 @@ async fn main() {
     };
 
     let res = db::insert_service(&config);
+    println!("Last inserted ID {}", res);
+    println!("Terminated");
 
     // println!("Hello, world!");
     // let smtp_config = types::ServiceConfig {
@@ -29,7 +32,7 @@ async fn main() {
     //     port: 25,
     //     ..Default::default()
     // };
-    // let result = services::verify_smtp(smtp_config);
+    // let result = services::verify_smtp(&smtp_config);
     // match result.success {
     //     true => {
     //         println!("Success: {}", result.message)
@@ -39,19 +42,19 @@ async fn main() {
     //     }
     // }
 
-    // let website_config = types::ServiceConfig {
-    //     host: String::from("https://www.army.mil.ng"),
-    //     port: 80,
-    //     ..Default::default()
-    // };
+    let website_config = types::ServiceConfig {
+        host: String::from("https://www.army.mil.ng"),
+        port: 80,
+        ..Default::default()
+    };
 
-    // let result = services::verify_website(website_config).await;
-    // match result.success {
-    //     true => {
-    //         println!("Website > Success: {}", result.message)
-    //     }
-    //     false => {
-    //         println!("Website > Failed: {}", result.message)
-    //     }
-    // }
+    let result = services::verify_website(&website_config).await;
+    match result.success {
+        true => {
+            println!("Website > Success: {}", result.message)
+        }
+        false => {
+            println!("Website > Failed: {}", result.message)
+        }
+    }
 }

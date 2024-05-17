@@ -22,9 +22,9 @@ pub struct ServiceVerificationResult {
 /// ## Errors
 ///
 /// This function will return an error.
-pub fn verify_smtp(smtp_config: ServiceConfig) -> ServiceVerificationResult {
+pub fn verify_smtp(smtp_config: &ServiceConfig) -> ServiceVerificationResult {
     let mut builder: SmtpTransportBuilder;
-    match (smtp_config.secure != None && smtp_config.secure.unwrap()) {
+    match smtp_config.secure != None && smtp_config.secure.unwrap() {
         true => {
             let result: Result<SmtpTransportBuilder, lettre::transport::smtp::Error> =
                 SmtpTransport::starttls_relay(&smtp_config.host);
@@ -49,7 +49,10 @@ pub fn verify_smtp(smtp_config: ServiceConfig) -> ServiceVerificationResult {
     let transport: SmtpTransport;
 
     if !(smtp_config.user.as_ref() == None) {
-        let creds = Credentials::new(smtp_config.user.unwrap(), smtp_config.pass.unwrap().clone());
+        let creds = Credentials::new(
+            smtp_config.user.as_ref().unwrap().to_string(),
+            smtp_config.pass.as_ref().unwrap().clone(),
+        );
         transport = builder.credentials(creds).build();
     } else {
         transport = builder.build();
@@ -67,7 +70,39 @@ pub fn verify_smtp(smtp_config: ServiceConfig) -> ServiceVerificationResult {
     }
 }
 
-pub async fn verify_website(website_config: ServiceConfig) -> ServiceVerificationResult {
+/// .
+/// Verify that's a wesbite it online make making an HTTP request to the host using the specified port
+/// At staus code of 200 assumed ut website is up.
+///
+/// Road Map: accept dynamic list of status codes
+///
+/// ## Example
+///
+/// ```
+/// let website_config = types::ServiceConfig {
+///   host: String::from("https://www.website.org"),
+///   port: 80,
+///   ..Default::default()
+/// };
+/// ```
+/// let result = services::verify_website(website_config).await;
+/// match result.success {
+///   true => {
+///     println!("{}", result.message)
+///   }
+///   false => {
+///     println!("{}", result.message)
+///   }
+/// }
+///
+/// ## Panics
+///
+/// The function will panic if the host is malformed or does not exist.
+///
+/// ## Errors
+///
+/// This function will return an error if .
+pub async fn verify_website(website_config: &ServiceConfig) -> ServiceVerificationResult {
     let client = Client::new();
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert("User-Agent", HeaderValue::from_static("hello"));
@@ -75,7 +110,7 @@ pub async fn verify_website(website_config: ServiceConfig) -> ServiceVerificatio
     if website_config.port != 80 {
         full_url = format!("{}:{}", website_config.host, website_config.port);
     } else {
-        full_url = website_config.host;
+        full_url = website_config.host.clone();
     }
     // Send a GET request to the specified URL
     match client.get(&full_url).headers(headers).send().await {
@@ -98,7 +133,45 @@ pub async fn verify_website(website_config: ServiceConfig) -> ServiceVerificatio
         }
         Err(e) => ServiceVerificationResult {
             success: false,
-            message: format!("Error: {}", e),
+            message: format!("Error ({}): {}", full_url, e),
         },
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_verify_smtp_return_true() {
+        let smtp_config = ServiceConfig {
+            host: String::from("smtp.freesmtpservers.com"),
+            port: 25,
+            ..Default::default()
+        };
+        let result: ServiceVerificationResult = verify_smtp(&smtp_config);
+        assert_eq!(result.success, true);
+    }
+
+    #[tokio::test]
+    async fn test_verify_website_return_false() {
+        let website_config = ServiceConfig {
+            host: String::from("wronghost"),
+            port: 80,
+            ..Default::default()
+        };
+        let result: ServiceVerificationResult = verify_website(&website_config).await;
+        assert_eq!(result.success, false);
+    }
+
+    #[tokio::test]
+    async fn test_verify_website_return_true() {
+        let website_config = ServiceConfig {
+            host: String::from("https://www.google.com"),
+            port: 80,
+            ..Default::default()
+        };
+        let result: ServiceVerificationResult = verify_website(&website_config).await;
+        println!("Website > Failed: {}", result.message);
+        assert_eq!(result.success, true);
     }
 }

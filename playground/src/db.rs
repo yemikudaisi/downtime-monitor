@@ -1,17 +1,22 @@
 use dotenv::dotenv;
-use rusqlite::{Connection, Error};
+use rusqlite::{params, Connection, Error};
 use std::env;
 
 use crate::core::types::ServiceConfig;
 
-pub fn establish_connection() -> Connection {
+pub fn get_connection() -> Connection {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    Connection::open(database_url).unwrap()
+    Connection::open(database_url).expect("Unable to open a database connection")
+}
+
+pub fn close_connection(conn: Connection){
+    conn.close().expect("Unable to closed databse connection.");
 }
 
 pub fn init() {
-    let sql = "CREATE TABLE IF NOT EXISTS service_configs (
+    let sql = "CREATE TABLE IF NOT EXISTS services (
+            id INTEGER PRIMARY KEY,
             name TEXT,
             description TEXT,
             host TEXT,
@@ -23,16 +28,25 @@ pub fn init() {
             retry_interval INTEGER,
             interval_timeout INTEGER
         )";
-    let conn = establish_connection();
-    let _ = conn.execute(sql, []);
-    conn.close().unwrap();
+    let conn = get_connection();
+    let _ = conn.execute(sql, []).expect("Unable to create database");
+    close_connection(conn);
 }
 
-pub fn insert_service(service: &ServiceConfig) -> rusqlite::Result<usize> {
-    let conn = establish_connection();
-    conn.execute(
-        "INSERT INTO service_configs (name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+/// .
+/// Inserts service option into the database
+/// # Panics
+///
+/// Panics if table doesn't exist.
+///
+/// # Errors
+///
+/// This function will return an error if .
+pub fn insert_service(service: &ServiceConfig) -> i64 {
+    let conn = get_connection();
+    let _ = conn.execute(
+        "INSERT INTO services (id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout)
+         VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         &[
             &service.name, 
             &service.description, 
@@ -45,5 +59,36 @@ pub fn insert_service(service: &ServiceConfig) -> rusqlite::Result<usize> {
             &service.retry_interval.unwrap().to_string(), 
             &service.interval_timeout.unwrap().to_string()
             ],
-    )
+    );
+    let res = conn.last_insert_rowid();
+    close_connection(conn);
+    res
+}
+
+fn update_service_config( service: &ServiceConfig){
+    let conn = get_connection();
+    conn.execute(
+        "UPDATE service_configs
+         SET name = ?1, description = ?2, host = ?3, port = ?4, secure = ?5, user = ?6, pass = ?7, interval = ?8, retry_interval = ?9, interval_timeout = ?10
+         WHERE id = ?11",
+        params![
+            service.name,
+            service.description,
+            service.host,
+            service.port,
+            service.secure,
+            service.user,
+            service.pass,
+            service.interval,
+            service.retry_interval,
+            service.interval_timeout,
+            service.id,
+        ],
+    ).expect("Unable to update value");
+}
+
+
+pub fn delete_service(id: &i64) {
+    let conn = get_connection();
+    conn.execute("DELETE FROM service_configs WHERE name = ?", &[id]).expect("Unable to delete service");
 }

@@ -5,6 +5,7 @@ use std::time::SystemTime;
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServiceConfig {
+    pub id: Option<i64>,
     pub name: String,
     pub description: String,
     pub host: String,
@@ -20,6 +21,7 @@ pub struct ServiceConfig {
 impl Default for ServiceConfig {
     fn default() -> Self {
         ServiceConfig {
+            id: None,
             name: String::new(),
             description: String::new(),
             host: String::new(),
@@ -37,7 +39,7 @@ impl Default for ServiceConfig {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Heartbeat {
-    service_id: i32,
+    service_id: i64,
     status: ServiceStatus,
     time: SystemTime,
     msg: String,
@@ -50,4 +52,22 @@ pub enum ServiceStatus {
     Up,
     Down,
     Pending,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_config_defaults() {
+        let cfg = ServiceConfig {
+            id: None,
+            name: "Service 2".to_string(),
+            description: "My service 2".to_string(),
+            host: "localhost".to_string(),
+            port: 8080,
+            ..Default::default()
+        };
+        assert_eq!(cfg.interval.unwrap(), 300)
+    }
 }
