@@ -1,3 +1,4 @@
+use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use std::time::SystemTime;
@@ -18,6 +19,8 @@ pub struct ServiceConfig {
     pub interval: Option<i32>,
     pub retry_interval: Option<i32>,
     pub interval_timeout: Option<i32>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
 }
 
 ///
@@ -30,12 +33,14 @@ impl Default for ServiceConfig {
             description: String::new(),
             host: String::new(),
             port: 80,
-            secure: None,
-            user: None,
-            pass: None,
+            secure: Some(false),
+            user: Some("".to_string()),
+            pass: Some("".to_string()),
             interval: Some(300),
             retry_interval: Some(0),
             interval_timeout: Some(48),
+            created_at: Some(Utc::now().to_rfc3339()),
+            updated_at: Some(Utc::now().to_rfc3339()),
         }
     }
 }

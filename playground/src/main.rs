@@ -2,13 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod core;
 mod db;
-use core::{services, types};
-use serde_json::Result;
+
 use tokio;
 
 #[tokio::main]
 async fn main() {
-    db::init();
+    db::create_tables();
     // let config = types::ServiceConfig {
     //     id: None,
     //     name: "Service 2".to_string(),
@@ -26,7 +25,7 @@ async fn main() {
     // let res = db::insert_service(&config);
     // println!("Last inserted ID {}", res);
     // println!("Terminated");
-    let res = db::get_service_config_id(1).unwrap();
+    let res = db::get_service_by_id(1).unwrap();
     // let deserialized = serde_json::to_string(res);
     println!("{:?}", serde_json::to_string(&res).unwrap());
 }
