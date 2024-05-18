@@ -86,12 +86,38 @@ pub fn get_service_config_id(id: i64) -> rusqlite::Result<ServiceConfig> {
             interval_timeout: row.get(10)?,
         })
     });
+    conn.close();
     row
 }
 
-fn update_service_config( service: &ServiceConfig){
+fn get_all_services() -> rusqlite::Result<Vec<ServiceConfig>> {
     let conn = get_connection();
-    conn.execute(
+    let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout FROM service_configs";
+
+    let configs: Vec<ServiceConfig> = conn
+        .query_map(query, params![], |row| {
+            Ok(ServiceConfig {
+                id: Some(row.get(0)?),
+                name: row.get(1)?,
+                description: row.get(2)?,
+                host: row.get(3)?,
+                port: row.get(4)?,
+                secure: Some(row.get::<_, String>(5)? == "true"),
+                user: row.get(6)?,
+                pass: row.get(7)?,
+                interval: row.get(8)?,
+                retry_interval: row.get(9)?,
+                interval_timeout: row.get(10)?,
+            })
+        })?
+        .collect();
+    conn.close();
+    Ok(configs)
+}
+
+fn update_service_config( service: &ServiceConfig) -> rusqlite:: Result<usize>{
+    let conn = get_connection();
+    let result = conn.execute(
         "UPDATE service_configs
          SET name = ?1, description = ?2, host = ?3, port = ?4, secure = ?5, user = ?6, pass = ?7, interval = ?8, retry_interval = ?9, interval_timeout = ?10
          WHERE id = ?11",
@@ -109,10 +135,14 @@ fn update_service_config( service: &ServiceConfig){
             service.id,
         ],
     ).expect("Unable to update value");
+    conn.close();
+    Ok(result)
 }
 
 
-pub fn delete_service(id: &i64) {
+pub fn delete_service(id: &i64) -> rusqlite::Result<usize> {
     let conn = get_connection();
-    conn.execute("DELETE FROM service_configs WHERE name = ?", &[id]).expect("Unable to delete service");
+    let result = conn.execute("DELETE FROM service_configs WHERE name = ?", &[id]).expect("Unable to delete service");
+    conn.close();
+    Ok(result)
 }

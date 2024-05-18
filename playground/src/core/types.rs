@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use std::time::SystemTime;
 
+///
+/// Contains service client configuration used for verification
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServiceConfig {
@@ -18,6 +20,8 @@ pub struct ServiceConfig {
     pub interval_timeout: Option<i32>,
 }
 
+///
+/// Default implementation of `ServiceConfig` struct.`
 impl Default for ServiceConfig {
     fn default() -> Self {
         ServiceConfig {
@@ -36,6 +40,9 @@ impl Default for ServiceConfig {
     }
 }
 
+///
+/// Contains data relating to each service configuration
+///
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Heartbeat {
@@ -47,6 +54,8 @@ pub struct Heartbeat {
     retries: i16,
 }
 
+///
+/// Represents the status of services
 #[derive(Deserialize, Debug)]
 pub enum ServiceStatus {
     Up,

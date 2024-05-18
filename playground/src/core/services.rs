@@ -14,7 +14,7 @@ pub struct ServiceVerificationResult {
 }
 
 /// .
-/// Verifies a SMTP service is up
+/// Verifies if an SMTP service is up
 /// ## Panics
 ///
 /// Panics if .
@@ -71,7 +71,7 @@ pub fn verify_smtp(smtp_config: &ServiceConfig) -> ServiceVerificationResult {
 }
 
 /// .
-/// Verify that's a wesbite it online make making an HTTP request to the host using the specified port
+/// Verify that a wesbite is online by making an HTTP request to the host using the specified port
 /// At staus code of 200 assumed ut website is up.
 ///
 /// Road Map: accept dynamic list of status codes
