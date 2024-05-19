@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use std::time::SystemTime;
@@ -50,6 +50,7 @@ impl Default for ServiceConfig {
 ///
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+#[allow(unused)]
 pub struct Heartbeat {
     service_id: i64,
     status: ServiceStatus,
@@ -67,6 +68,29 @@ pub enum ServiceStatus {
     Down,
     Pending,
 }
+
+// mod iso8601 {
+//     use chrono::{DateTime, Utc};
+//     use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
+
+//     const FORMAT: &str = "%Y-%m-%dT%H:%M:%SZ";
+
+//     pub fn serialize<S>(date: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         date.map(|d| d.format(FORMAT).to_string())
+//             .serialize(serializer)
+//     }
+
+//     pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
+//     where
+//         D: Deserializer<'de>,
+//     {
+//         let s: Option<String> = Option::deserialize(deserializer)?;
+//         Ok(s.and_then(|s| DateTime::parse_from_str(&s, FORMAT).ok()))
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

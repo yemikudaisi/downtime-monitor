@@ -1,5 +1,6 @@
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{transport::smtp::SmtpTransportBuilder, SmtpTransport};
+// TODO: use tauri_plugin_http::reqwest;
 use reqwest::header::HeaderValue;
 use reqwest::Client;
 use reqwest::StatusCode;
@@ -13,7 +14,7 @@ pub struct ServiceVerificationResult {
     pub message: String,
 }
 
-/// .
+///
 /// Verifies if an SMTP service is up
 /// ## Panics
 ///
@@ -22,6 +23,7 @@ pub struct ServiceVerificationResult {
 /// ## Errors
 ///
 /// This function will return an error.
+#[allow(unused)]
 pub fn verify_smtp(smtp_config: &ServiceConfig) -> ServiceVerificationResult {
     let mut builder: SmtpTransportBuilder;
     match smtp_config.secure != None && smtp_config.secure.unwrap() {
@@ -102,6 +104,7 @@ pub fn verify_smtp(smtp_config: &ServiceConfig) -> ServiceVerificationResult {
 /// ## Errors
 ///
 /// This function will return an error if .
+#[allow(unused)]
 pub async fn verify_website(website_config: &ServiceConfig) -> ServiceVerificationResult {
     let client = Client::new();
     let mut headers = reqwest::header::HeaderMap::new();
@@ -139,6 +142,7 @@ pub async fn verify_website(website_config: &ServiceConfig) -> ServiceVerificati
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use super::*;
 
     #[test]

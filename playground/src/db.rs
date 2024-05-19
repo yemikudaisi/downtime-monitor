@@ -5,16 +5,19 @@ use std::env;
 
 use crate::core::types::ServiceConfig;
 
+#[allow(unused)]
 pub fn get_connection() -> Result<Connection> {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     Ok(Connection::open(database_url).expect("Unable to open a database connection"))
 }
 
+#[allow(unused)]
 pub fn close_connection(conn: Connection){
     conn.close().expect("Unable to closed databse connection.");
 }
 
+#[allow(unused)]
 pub fn create_tables() -> Result<usize, Error> {
     let query = "CREATE TABLE IF NOT EXISTS services (
             id INTEGER PRIMARY KEY,
@@ -37,6 +40,7 @@ pub fn create_tables() -> Result<usize, Error> {
     result
 }
 
+#[allow(unused)]
 pub fn delete_tables() -> Result<usize, Error> {
     let query = "DROP TABLE services";
     let conn = get_connection().unwrap();
@@ -53,7 +57,8 @@ pub fn delete_tables() -> Result<usize, Error> {
 ///
 /// # Errors
 ///
-/// This function will return an error if .
+/// This function will return an error if
+#[allow(unused)]
 pub fn insert_service(service: &ServiceConfig) -> Result<i64> {
     let conn = get_connection().unwrap();
     let _ = conn.execute(
@@ -79,6 +84,7 @@ pub fn insert_service(service: &ServiceConfig) -> Result<i64> {
     Ok(res)
 }
 
+#[allow(unused)]
 pub fn get_service_by_id(id: i64) -> rusqlite::Result<ServiceConfig> {
     let conn = get_connection().unwrap();
     let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at
@@ -126,7 +132,7 @@ pub fn get_service_by_id(id: i64) -> rusqlite::Result<ServiceConfig> {
 
 //     Ok(())
 // }
-
+#[allow(unused)]
 fn get_all_services() -> rusqlite::Result<Vec<ServiceConfig>> {
     let conn = get_connection().unwrap();
     let mut stmt = conn.prepare("SELECT * FROM service_configs")?;
@@ -150,6 +156,7 @@ fn get_all_services() -> rusqlite::Result<Vec<ServiceConfig>> {
     rows.collect()
 }
 
+#[allow(unused)]
 fn update_service( service: &ServiceConfig) -> rusqlite:: Result<usize>{
     let conn = get_connection().unwrap();
     let result = conn.execute(
@@ -175,7 +182,7 @@ fn update_service( service: &ServiceConfig) -> rusqlite:: Result<usize>{
     Ok(result)
 }
 
-
+#[allow(unused)]
 pub fn delete_service(id: &i64) -> rusqlite::Result<usize> {
     let conn = get_connection().unwrap();
     let result = conn.execute("DELETE FROM service_configs WHERE name = ?", &[id]).expect("Unable to delete service");
@@ -184,6 +191,7 @@ pub fn delete_service(id: &i64) -> rusqlite::Result<usize> {
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use super::*;
 
     #[test]

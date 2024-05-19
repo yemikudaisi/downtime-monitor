@@ -7,7 +7,7 @@ use tokio;
 
 #[tokio::main]
 async fn main() {
-    db::create_tables();
+    let _ = db::create_tables();
     // let config = types::ServiceConfig {
     //     id: None,
     //     name: "Service 2".to_string(),
@@ -27,5 +27,5 @@ async fn main() {
     // println!("Terminated");
     let res = db::get_service_by_id(1).unwrap();
     // let deserialized = serde_json::to_string(res);
-    println!("{:?}", serde_json::to_string(&res).unwrap());
+    println!("{:#?}", serde_json::to_string(&res).unwrap());
 }
