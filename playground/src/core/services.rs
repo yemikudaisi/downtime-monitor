@@ -15,7 +15,7 @@ pub struct ServiceVerificationResult {
 }
 
 ///
-/// Verifies if an SMTP service is up
+/// Verifies if an SMTP service is up (Tecta)
 /// ## Panics
 ///
 /// Panics if .

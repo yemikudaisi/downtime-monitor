@@ -13,11 +13,6 @@ pub fn get_connection() -> Result<Connection> {
 }
 
 #[allow(unused)]
-pub fn close_connection(conn: Connection){
-    conn.close().expect("Unable to closed databse connection.");
-}
-
-#[allow(unused)]
 pub fn create_tables() -> Result<usize, Error> {
     let query = "CREATE TABLE IF NOT EXISTS services (
             id INTEGER PRIMARY KEY,
@@ -36,26 +31,49 @@ pub fn create_tables() -> Result<usize, Error> {
         )";
     let conn = get_connection().unwrap();
     let result = conn.execute(query, []);
-    close_connection(conn);
     result
 }
+
+///
+/// Gets the row count of a table
+/// 
+/// ## Panics
+/// 
+/// This funciton panics if the specified table is not in the database
+/// 
+#[allow(unused)]
+fn get_table_count(table_name: &str) -> Result<i64> {
+    let conn = get_connection().unwrap();
+    let sql = format!("SELECT COUNT(*) FROM {}", table_name);
+    let mut stmt = conn.prepare(&sql)?;
+    stmt.clear_bindings();
+    let count: i64 = stmt.query_row([], |row| row.get(0))?;
+    Ok(count)
+}
+
 
 #[allow(unused)]
 pub fn delete_tables() -> Result<usize, Error> {
     let query = "DROP TABLE services";
     let conn = get_connection().unwrap();
     let result = conn.execute(query, []);
-    close_connection(conn);
     result
+}
+
+
+fn reset_tables(){
+    _ = delete_tables();
+    _ = create_tables();
 }
 
 /// .
 /// Inserts service option into the database
-/// # Panics
+/// 
+/// ## Panics
 ///
 /// Panics if table doesn't exist.
 ///
-/// # Errors
+/// ## Errors
 ///
 /// This function will return an error if
 #[allow(unused)]
@@ -80,7 +98,7 @@ pub fn insert_service(service: &ServiceConfig) -> Result<i64> {
             ],
     );
     let res = conn.last_insert_rowid();
-    close_connection(conn);
+    
     Ok(res)
 }
 
@@ -108,7 +126,7 @@ pub fn get_service_by_id(id: i64) -> rusqlite::Result<ServiceConfig> {
             updated_at: row.get(12)?,
         })
     });
-    close_connection(conn);
+    
     row
 }
 
@@ -135,7 +153,7 @@ pub fn get_service_by_id(id: i64) -> rusqlite::Result<ServiceConfig> {
 #[allow(unused)]
 fn get_all_services() -> rusqlite::Result<Vec<ServiceConfig>> {
     let conn = get_connection().unwrap();
-    let mut stmt = conn.prepare("SELECT * FROM service_configs")?;
+    let mut stmt = conn.prepare("SELECT * FROM services")?;
     let rows = stmt.query_map([], |row| {
         Ok(ServiceConfig {
             id: row.get(0)?,
@@ -178,21 +196,30 @@ fn update_service( service: &ServiceConfig) -> rusqlite:: Result<usize>{
             service.id,
         ],
     ).expect("Unable to update value");
-    close_connection(conn);
+    
     Ok(result)
 }
 
 #[allow(unused)]
 pub fn delete_service(id: &i64) -> rusqlite::Result<usize> {
     let conn = get_connection().unwrap();
-    let result = conn.execute("DELETE FROM service_configs WHERE name = ?", &[id]).expect("Unable to delete service");
-    close_connection(conn);
+    let result = conn.execute("DELETE FROM services WHERE id = ?", &[id]).expect("Unable to delete service");
+    
     Ok(result)
 }
 
 mod tests {
     #[allow(unused_imports)]
     use super::*;
+
+    fn get_test_service() -> ServiceConfig{
+        ServiceConfig {
+            name: String::from("Test Service 1"),
+            host: String::from("https://www.google.com"),
+            port: 80,
+            ..Default::default()
+        }
+    }
 
     #[test]
     fn test_get_connection_is_ok(){
@@ -214,22 +241,56 @@ mod tests {
         _ = create_tables();
     }
 
+     #[test]
+    fn test_table_table_count(){
+        reset_tables();
+        _ = insert_service(&get_test_service());
+        let result = get_table_count("services");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 1);
+    }
+
+
     #[test]
     fn test_insert_service_is_ok(){
-        let _ = create_tables();
-        let service_params = ServiceConfig {
-            name: String::from("Test Service 1"),
-            host: String::from("https://www.google.com"),
-            port: 80,
-            ..Default::default()
-        };
+        reset_tables();
+        let service_params = get_test_service();
         let result = insert_service(&service_params);
-        match result {
-            Ok(id) => {
-                println!("The inserted ID is {}", id);
-                assert!(true);
+        assert!(result.is_ok());
+        assert_eq!(get_table_count("services").unwrap(), 1);
+    }
+
+    #[test]
+    fn test_get_service(){
+        reset_tables();
+        let _ = insert_service(&get_test_service());
+        let result = get_service_by_id(1);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().id.unwrap(), 1);
+    }
+
+    #[test]
+    fn test_get_all_service(){
+        reset_tables();
+        let _ = insert_service(&get_test_service());
+        let _ = insert_service(&get_test_service());
+        let result = match get_all_services() {
+            Ok(r) => r,
+            Err(e) => { 
+                eprint!("Error: {}", e);
+                Vec::new()
             },
-            Err(e) => eprint!("{}", e)
-        } 
+        };
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_delete_service(){
+        reset_tables();
+        let _ = insert_service(&get_test_service());
+        let delete_result = delete_service(&1);
+        assert!(delete_result.is_ok());
+        let result = get_all_services();
+        assert_eq!(result.unwrap().len(), 0);
     }
 }
