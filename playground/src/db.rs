@@ -20,7 +20,7 @@ pub fn create_tables() -> Result<usize, Error> {
             description TEXT,
             host TEXT,
             port INTEGER,
-            secure INTEGER,
+            secure TEXT,
             user TEXT,
             pass TEXT,
             interval INTEGER,
@@ -178,7 +178,7 @@ fn get_all_services() -> rusqlite::Result<Vec<ServiceConfig>> {
 fn update_service( service: &ServiceConfig) -> rusqlite:: Result<usize>{
     let conn = get_connection().unwrap();
     let result = conn.execute(
-        "UPDATE service_configs
+        "UPDATE services
          SET name = ?1, description = ?2, host = ?3, port = ?4, secure = ?5, user = ?6, pass = ?7, interval = ?8, retry_interval = ?9, interval_timeout = ?10, updated_at = ?11
          WHERE id = ?12",
         params![
@@ -292,5 +292,19 @@ mod tests {
         assert!(delete_result.is_ok());
         let result = get_all_services();
         assert_eq!(result.unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_update_service(){
+        reset_tables();
+        let mut service  = get_test_service();
+        let insert_id = insert_service(&service).unwrap();
+        service = get_service_by_id(insert_id).unwrap();
+        let new_name = "New Service Name";
+        service.name = new_name.to_string();
+        let result  = update_service(&service);
+        assert!(result.is_ok());
+        service = get_service_by_id(insert_id).unwrap();
+        assert_eq!(service.name, new_name.to_string());
     }
 }
