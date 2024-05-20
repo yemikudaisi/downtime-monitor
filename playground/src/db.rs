@@ -13,8 +13,9 @@ pub fn get_connection() -> Result<Connection> {
 }
 
 #[allow(unused)]
-pub fn create_tables() -> Result<usize, Error> {
-    let query = "CREATE TABLE IF NOT EXISTS services (
+pub fn create_tables() -> Result<()> {
+    let service_query = "
+        CREATE TABLE IF NOT EXISTS services (
             id INTEGER PRIMARY KEY,
             name TEXT,
             description TEXT,
@@ -29,9 +30,23 @@ pub fn create_tables() -> Result<usize, Error> {
             created_at TEXT,
             updated_at TEXT
         )";
+    let heartbeat_query = "
+        CREATE TABLE heartbeats (
+            service_id INTEGER,
+            status TEXT,
+            time DATETIME,
+            msg TEXT,
+            duration INTEGER,
+            retries INTEGER
+        )";
     let conn = get_connection().unwrap();
-    let result = conn.execute(query, []);
-    result
+    conn.transaction().unwrap().execute(service_query, []).expect("Unable to create service table.");
+    conn.execute(&heartbeat_query, []).expect("Unable to create service table.");
+    Ok(())
+}
+
+pub mod heartbeat {
+
 }
 
 ///
@@ -212,6 +227,7 @@ mod tests {
     #[allow(unused_imports)]
     use super::*;
 
+    #[allow(unused)]
     fn get_test_service() -> ServiceConfig{
         ServiceConfig {
             name: String::from("Test Service 1"),
