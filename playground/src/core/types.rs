@@ -1,6 +1,6 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::{io::Error, str::FromStr, time::Duration};
+use std::str::FromStr;
 
 ///
 /// Contains service client configuration used for verification
@@ -51,7 +51,7 @@ impl Default for ServiceConfig {
 #[serde(rename_all = "camelCase")]
 #[allow(unused)]
 pub struct Heartbeat {
-    pub id: i64,
+    pub id: Option<i64>,
     pub service_id: i64,
     pub status: ServiceStatus,
     pub time: String,

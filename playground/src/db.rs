@@ -3,6 +3,12 @@ use dotenv::dotenv;
 use rusqlite::{params, Connection, Error, Result};
 use std::env;
 
+///
+/// Creates a Rusqlite Connection
+/// 
+/// ## Panic
+/// This function panics if and .env file does not exist
+/// or DATABASE_URL is not specified in the .env file
 #[allow(unused)]
 pub fn get_connection() -> Result<Connection> {
     dotenv().ok();
@@ -29,7 +35,8 @@ pub fn create_tables() -> Result<()> {
             updated_at TEXT
         )";
     let heartbeat_query = "
-        CREATE TABLE heartbeats (
+        CREATE TABLE IF NOT EXISTS heartbeats (
+            id INTEGER PRIMARY KEY,
             service_id INTEGER,
             status TEXT,
             time TEXT,
@@ -37,10 +44,11 @@ pub fn create_tables() -> Result<()> {
             duration INTEGER,
             retries INTEGER
         )";
-    match  get_connection().unwrap();
-    conn.transaction().execute(service_query, []).expect("Unable to create service table.");
-    conn.execute(&heartbeat_query, []).expect("Unable to create service table.");
-    Ok(())
+    let mut conn = get_connection().unwrap();
+    let tx = conn.transaction().unwrap();
+    tx.execute(service_query, []).expect("Unable to create service table.");
+    tx.execute(&heartbeat_query, []).expect("Unable to create service table.");
+    tx.commit()
 }
 
 ///
@@ -52,7 +60,7 @@ pub fn create_tables() -> Result<()> {
 /// 
 #[allow(unused)]
 fn get_table_count(table_name: &str) -> Result<i64> {
-    let conn = get_connection().unwrap();
+    let mut conn = get_connection().unwrap();
     let sql = format!("SELECT COUNT(*) FROM {}", table_name);
     let mut stmt = conn.prepare(&sql)?;
     stmt.clear_bindings();
@@ -61,14 +69,15 @@ fn get_table_count(table_name: &str) -> Result<i64> {
 }
 
 #[allow(unused)]
-pub fn delete_tables() -> Result<usize, Error> {
-    let query = "DROP TABLE services";
-    let conn = get_connection().unwrap();
-    let result = conn.execute(query, []);
-    result
+pub fn delete_tables() -> rusqlite::Result<()> {
+    let mut conn = get_connection().unwrap();
+    let tx = conn.transaction().unwrap();
+    tx.execute("DROP TABLE IF EXISTS heartbeats", []);
+    tx.execute("DROP TABLE EXISTS services", []);
+    tx.commit()
 }
 
-
+#[allow(unused)]
 fn reset_tables(){
     _ = delete_tables();
     _ = create_tables();
@@ -77,77 +86,82 @@ fn reset_tables(){
 pub mod heartbeat {
     use super::*;
     use crate::core::types::{Heartbeat, ServiceStatus};
+    use std::str::FromStr;
 
-    pub fn create_heartbeat(heartbeat: &Heartbeat) -> Result<()> {
+    #[allow(unused)]
+    pub fn insert(heartbeat: &Heartbeat) -> Result<()> {
         let conn = get_connection().unwrap();
-    conn.execute(
-        "INSERT INTO heartbeats (service_id, status, time, msg, duration, retries)
-         VALUES (NULL, ?1, ?2, ?3, ?4, ?5, ?6)",
-        params![
-            heartbeat.service_id,
-            heartbeat.status.to_string(),
-            heartbeat.time.to_string(),
-            heartbeat.msg,
-            heartbeat.duration,
-            heartbeat.retries,
-        ],
-    )?;
-    Ok(())
+        conn.execute(
+            "INSERT INTO heartbeats (id, service_id, status, time, msg, duration, retries)
+            VALUES (NULL, ?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                heartbeat.service_id,
+                heartbeat.status.to_string(),
+                heartbeat.time.to_string(),
+                heartbeat.msg,
+                heartbeat.duration,
+                heartbeat.retries,
+            ],
+        )?;
+        Ok(())
     }
 
+    #[allow(unused)]
     pub fn get_heartbeat_by_id(conn: &Connection, id: i64) -> Result<Option<Heartbeat>> {
-    let mut stmt = conn.prepare("SELECT * FROM Heartbeat WHERE id = ?1")?;
-    let mut rows = stmt.query(params![id])?;
+        let mut stmt = conn.prepare("SELECT * FROM heartbeats WHERE id = ?1")?;
+        let mut rows = stmt.query(params![id])?;
 
-    if let Some(row) = rows.next()? {
-        Ok(Some(Heartbeat {
-            id: row.get(0)?,
-            service_id: row.get(1)?,
-            status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
-            time: SystemTime::UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>(3)? as u64),
-            msg: row.get(4)?,
-            duration: Duration::from_secs(row.get::<_, i64>(5)? as u64),
-            retries: row.get(6)?,
-        }))
-    } else {
-        Ok(None)
+        if let Some(row) = rows.next()? {
+            Ok(Some(Heartbeat {
+                id: row.get(0)?,
+                service_id: row.get(1)?,
+                status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
+                time:row.get(3)?,
+                msg: row.get(4)?,
+                duration: row.get(5)?,
+                retries: row.get(6)?,
+            }))
+        } else {
+            Ok(None)
+        }
     }
-}
 
-pub fn get_all_heartbeats(conn: &Connection) -> Result<Vec<Heartbeat>> {
-    let mut stmt = conn.prepare("SELECT * FROM Heartbeat")?;
-    let rows = stmt.query_map(NO_PARAMS, |row| {
-        Ok(Heartbeat {
-            id: row.get(0)?,
-            service_id: row.get(1)?,
-            status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
-            time: SystemTime::UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>(3)? as u64),
-            msg: row.get(4)?,
-            duration: Duration::from_secs(row.get::<_, i64>(5)? as u64),
-            retries: row.get(6)?,
-        })
-    })?;
+    #[allow(unused)]
+    pub fn get_all_heartbeats(conn: &Connection) -> Result<Vec<Heartbeat>> {
+        let mut stmt = conn.prepare("SELECT * FROM heartbeats")?;
+        let rows = stmt.query_map([], |row| {
+            Ok(Heartbeat {
+                id: row.get(0)?,
+                service_id: row.get(1)?,
+                status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
+                time: row.get(3)?,
+                msg: row.get(4)?,
+                duration: row.get(5)?,
+                retries: row.get(6)?,
+            })
+        })?;
 
-    rows.collect()
-}
+        rows.collect()
+    }
 
-pub fn update_heartbeat(conn: &Connection, heartbeat: &Heartbeat) -> Result<()> {
-    conn.execute(
-        "UPDATE Heartbeat
-         SET service_id = ?1, status = ?2, time = ?3, msg = ?4, duration = ?5, retries = ?6
-         WHERE id = ?7",
-        params![
-            heartbeat.service_id,
-            heartbeat.status.to_string(),
-            heartbeat.time.to_string(),
-            heartbeat.msg,
-            heartbeat.duration,
-            heartbeat.retries,
-            heartbeat.id,
-        ],
-    )?;
-    Ok(())
-}
+    #[allow(unused)]
+    pub fn update_heartbeat(conn: &Connection, heartbeat: &Heartbeat) -> Result<()> {
+        conn.execute(
+            "UPDATE heartbeats
+            SET service_id = ?1, status = ?2, time = ?3, msg = ?4, duration = ?5, retries = ?6
+            WHERE id = ?7",
+            params![
+                heartbeat.service_id,
+                heartbeat.status.to_string(),
+                heartbeat.time.to_string(),
+                heartbeat.msg,
+                heartbeat.duration,
+                heartbeat.retries,
+                heartbeat.id,
+            ],
+        )?;
+        Ok(())
+    }
 
     #[allow(unused)]
     pub fn delete(id: &i64) -> rusqlite::Result<usize> {
@@ -288,9 +302,12 @@ pub mod service{
 
 
 mod tests {
+    use chrono::Utc;
+
     #[allow(unused_imports)]
-    use super::*;
-    use crate::core::types::ServiceConfig;
+    use super::super::db::service::*;
+    use crate::{core::types::{Heartbeat, ServiceConfig, ServiceStatus}, db::{create_tables, delete_tables, get_connection, get_table_count, reset_tables}};
+    use crate::db::service;
 
     #[allow(unused)]
     fn get_test_service() -> ServiceConfig{
@@ -299,6 +316,19 @@ mod tests {
             host: String::from("https://www.google.com"),
             port: 80,
             ..Default::default()
+        }
+    }
+
+    #[allow(unused)]
+    fn get_test_heartbeat() -> Heartbeat{
+        Heartbeat {
+            id: None,
+            service_id: 1,
+            status: ServiceStatus::Up,
+            time: Utc::now().to_rfc3339(),
+            msg: "Pinged successful".to_string(),
+            duration: 9,
+            retries: 0,
         }
     }
 
@@ -325,67 +355,135 @@ mod tests {
      #[test]
     fn test_table_table_count(){
         reset_tables();
-        _ = service::insert(&get_test_service());
+        _ = crate::db::tests::insert(&get_test_service());
         let result = get_table_count("services");
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 1);
     }
 
-
-    #[test]
-    fn test_insert_service_is_ok(){
-        reset_tables();
-        let service_params = get_test_service();
-        let result = service::insert(&service_params);
-        assert!(result.is_ok());
-        assert_eq!(get_table_count("services").unwrap(), 1);
+    mod service_tests {
+        #[allow(unused_imports)]
+        use super::*;
+        
+        #[test]
+        fn test_insert_service_is_ok(){
+            reset_tables();
+            let service_params = get_test_service();
+            let result = service::insert(&service_params);
+            assert!(result.is_ok());
+            assert_eq!(get_table_count("services").unwrap(), 1);
+        }
+    
+        #[test]
+        fn test_get_service(){
+            reset_tables();
+            let _ = service::insert(&get_test_service());
+            let result = service::get_by_id(1);
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap().id.unwrap(), 1);
+        }
+    
+        #[test]
+        fn test_get_all_service(){
+            reset_tables();
+            let _ = service::insert(&get_test_service());
+            let _ = service::insert(&get_test_service());
+            let result = match service::get_all() {
+                Ok(r) => r,
+                Err(e) => { 
+                    eprint!("Error: {}", e);
+                    Vec::new()
+                },
+            };
+            assert_eq!(result.len(), 2);
+        }
+    
+        #[test]
+        fn test_delete_service(){
+            reset_tables();
+            let _ = service::insert(&get_test_service());
+            let delete_result = service::delete(&1);
+            assert!(delete_result.is_ok());
+            let result = service::get_all();
+            assert_eq!(result.unwrap().len(), 0);
+        }
+    
+        #[test]
+        fn test_update_service(){
+            reset_tables();
+            let mut service  = get_test_service();
+            let insert_id = service::insert(&service).unwrap();
+            service = service::get_by_id(insert_id).unwrap();
+            let new_name = "New Service Name";
+            service.name = new_name.to_string();
+            let result  = service::update(&service);
+            assert!(result.is_ok());
+            service = service::get_by_id(insert_id).unwrap();
+            assert_eq!(service.name, new_name.to_string());
+        }
     }
 
-    #[test]
-    fn test_get_service(){
-        reset_tables();
-        let _ = service::insert(&get_test_service());
-        let result = service::get_by_id(1);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().id.unwrap(), 1);
-    }
+    mod heartbeat_tests {
+        use crate::db::heartbeat;
 
-    #[test]
-    fn test_get_all_service(){
-        reset_tables();
-        let _ = service::insert(&get_test_service());
-        let _ = service::insert(&get_test_service());
-        let result = match service::get_all() {
-            Ok(r) => r,
-            Err(e) => { 
-                eprint!("Error: {}", e);
-                Vec::new()
-            },
-        };
-        assert_eq!(result.len(), 2);
-    }
-
-    #[test]
-    fn test_delete_service(){
-        reset_tables();
-        let _ = service::insert(&get_test_service());
-        let delete_result = service::delete(&1);
-        assert!(delete_result.is_ok());
-        let result = service::get_all();
-        assert_eq!(result.unwrap().len(), 0);
-    }
-
-    #[test]
-    fn test_update_service(){
-        reset_tables();
-        let mut service  = get_test_service();
-        let insert_id = service::insert(&service).unwrap();
-        service = service::get_by_id(insert_id).unwrap();
-        let new_name = "New Service Name";
-        service.name = new_name.to_string();
-        let result  = service::update(&service);
-        assert!(result.is_ok());
-        service = service::get_by_id(insert_id).unwrap();
-        assert_eq!(service.name, new_name.to_string());
+        #[allow(unused_imports)]
+        use super::*;
+        
+        #[test]
+        fn insert_is_ok(){
+            reset_tables();
+            let heartbeat = get_test_heartbeat();
+            let result = heartbeat::insert(&heartbeat);
+            assert!(result.is_ok());
+            assert_eq!(get_table_count("heartbeats").unwrap(), 1);
+        }
+    
+        #[test]
+        fn get_is_ok(){
+            reset_tables();
+            let _ = heartbeat::insert(&get_test_heartbeat());
+            let result = heartbeat::get_by_id(1);
+            assert!(result.is_ok());
+            assert_eq!(result.unwrap().id.unwrap(), 1);
+        }
+    
+        #[test]
+        fn test_get_all_service(){
+            reset_tables();
+            let _ = service::insert(&get_test_service());
+            let _ = service::insert(&get_test_service());
+            let result = match service::get_all() {
+                Ok(r) => r,
+                Err(e) => { 
+                    eprint!("Error: {}", e);
+                    Vec::new()
+                },
+            };
+            assert_eq!(result.len(), 2);
+        }
+    
+        #[test]
+        fn test_delete_service(){
+            reset_tables();
+            let _ = service::insert(&get_test_service());
+            let delete_result = service::delete(&1);
+            assert!(delete_result.is_ok());
+            let result = service::get_all();
+            assert_eq!(result.unwrap().len(), 0);
+        }
+    
+        #[test]
+        fn test_update_service(){
+            reset_tables();
+            let mut service  = get_test_service();
+            let insert_id = service::insert(&service).unwrap();
+            service = service::get_by_id(insert_id).unwrap();
+            let new_name = "New Service Name";
+            service.name = new_name.to_string();
+            let result  = service::update(&service);
+            assert!(result.is_ok());
+            service = service::get_by_id(insert_id).unwrap();
+            assert_eq!(service.name, new_name.to_string());
+        }
     }
 }
