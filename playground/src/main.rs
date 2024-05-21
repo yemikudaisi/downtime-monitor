@@ -25,7 +25,7 @@ async fn main() {
     // let res = db::insert_service(&config);
     // println!("Last inserted ID {}", res);
     // println!("Terminated");
-    let res = db::get_service_by_id(1).unwrap();
+    let res = db::service::get_by_id(1).unwrap();
     // let deserialized = serde_json::to_string(res);
     println!("{:#?}", serde_json::to_string(&res).unwrap());
 }

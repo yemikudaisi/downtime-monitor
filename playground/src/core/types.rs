@@ -1,6 +1,6 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::{io::Error, str::FromStr, time::Duration};
+use std::str::FromStr;
 
 ///
 /// Contains service client configuration used for verification

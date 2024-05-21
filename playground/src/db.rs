@@ -37,8 +37,8 @@ pub fn create_tables() -> Result<()> {
             duration INTEGER,
             retries INTEGER
         )";
-    match  get_connection().unwrap();
-    conn.transaction().execute(service_query, []).expect("Unable to create service table.");
+    let mut conn = get_connection().unwrap();
+    conn.transaction().unwrap().execute(service_query, []).expect("Unable to create service table.");
     conn.execute(&heartbeat_query, []).expect("Unable to create service table.");
     Ok(())
 }
@@ -68,7 +68,7 @@ pub fn delete_tables() -> Result<usize, Error> {
     result
 }
 
-
+#[allow(unused)]
 fn reset_tables(){
     _ = delete_tables();
     _ = create_tables();
@@ -77,77 +77,82 @@ fn reset_tables(){
 pub mod heartbeat {
     use super::*;
     use crate::core::types::{Heartbeat, ServiceStatus};
+    use std::str::FromStr;
 
+    #[allow(unused)]
     pub fn create_heartbeat(heartbeat: &Heartbeat) -> Result<()> {
         let conn = get_connection().unwrap();
-    conn.execute(
-        "INSERT INTO heartbeats (service_id, status, time, msg, duration, retries)
-         VALUES (NULL, ?1, ?2, ?3, ?4, ?5, ?6)",
-        params![
-            heartbeat.service_id,
-            heartbeat.status.to_string(),
-            heartbeat.time.to_string(),
-            heartbeat.msg,
-            heartbeat.duration,
-            heartbeat.retries,
-        ],
-    )?;
-    Ok(())
+        conn.execute(
+            "INSERT INTO heartbeats (service_id, status, time, msg, duration, retries)
+            VALUES (NULL, ?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                heartbeat.service_id,
+                heartbeat.status.to_string(),
+                heartbeat.time.to_string(),
+                heartbeat.msg,
+                heartbeat.duration,
+                heartbeat.retries,
+            ],
+        )?;
+        Ok(())
     }
 
+    #[allow(unused)]
     pub fn get_heartbeat_by_id(conn: &Connection, id: i64) -> Result<Option<Heartbeat>> {
-    let mut stmt = conn.prepare("SELECT * FROM Heartbeat WHERE id = ?1")?;
-    let mut rows = stmt.query(params![id])?;
+        let mut stmt = conn.prepare("SELECT * FROM Heartbeat WHERE id = ?1")?;
+        let mut rows = stmt.query(params![id])?;
 
-    if let Some(row) = rows.next()? {
-        Ok(Some(Heartbeat {
-            id: row.get(0)?,
-            service_id: row.get(1)?,
-            status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
-            time: SystemTime::UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>(3)? as u64),
-            msg: row.get(4)?,
-            duration: Duration::from_secs(row.get::<_, i64>(5)? as u64),
-            retries: row.get(6)?,
-        }))
-    } else {
-        Ok(None)
+        if let Some(row) = rows.next()? {
+            Ok(Some(Heartbeat {
+                id: row.get(0)?,
+                service_id: row.get(1)?,
+                status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
+                time:row.get(3)?,
+                msg: row.get(4)?,
+                duration: row.get(5)?,
+                retries: row.get(6)?,
+            }))
+        } else {
+            Ok(None)
+        }
     }
-}
 
-pub fn get_all_heartbeats(conn: &Connection) -> Result<Vec<Heartbeat>> {
-    let mut stmt = conn.prepare("SELECT * FROM Heartbeat")?;
-    let rows = stmt.query_map(NO_PARAMS, |row| {
-        Ok(Heartbeat {
-            id: row.get(0)?,
-            service_id: row.get(1)?,
-            status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
-            time: SystemTime::UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>(3)? as u64),
-            msg: row.get(4)?,
-            duration: Duration::from_secs(row.get::<_, i64>(5)? as u64),
-            retries: row.get(6)?,
-        })
-    })?;
+    #[allow(unused)]
+    pub fn get_all_heartbeats(conn: &Connection) -> Result<Vec<Heartbeat>> {
+        let mut stmt = conn.prepare("SELECT * FROM Heartbeat")?;
+        let rows = stmt.query_map([], |row| {
+            Ok(Heartbeat {
+                id: row.get(0)?,
+                service_id: row.get(1)?,
+                status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
+                time: row.get(3)?,
+                msg: row.get(4)?,
+                duration: row.get(5)?,
+                retries: row.get(6)?,
+            })
+        })?;
 
-    rows.collect()
-}
+        rows.collect()
+    }
 
-pub fn update_heartbeat(conn: &Connection, heartbeat: &Heartbeat) -> Result<()> {
-    conn.execute(
-        "UPDATE Heartbeat
-         SET service_id = ?1, status = ?2, time = ?3, msg = ?4, duration = ?5, retries = ?6
-         WHERE id = ?7",
-        params![
-            heartbeat.service_id,
-            heartbeat.status.to_string(),
-            heartbeat.time.to_string(),
-            heartbeat.msg,
-            heartbeat.duration,
-            heartbeat.retries,
-            heartbeat.id,
-        ],
-    )?;
-    Ok(())
-}
+    #[allow(unused)]
+    pub fn update_heartbeat(conn: &Connection, heartbeat: &Heartbeat) -> Result<()> {
+        conn.execute(
+            "UPDATE Heartbeat
+            SET service_id = ?1, status = ?2, time = ?3, msg = ?4, duration = ?5, retries = ?6
+            WHERE id = ?7",
+            params![
+                heartbeat.service_id,
+                heartbeat.status.to_string(),
+                heartbeat.time.to_string(),
+                heartbeat.msg,
+                heartbeat.duration,
+                heartbeat.retries,
+                heartbeat.id,
+            ],
+        )?;
+        Ok(())
+    }
 
     #[allow(unused)]
     pub fn delete(id: &i64) -> rusqlite::Result<usize> {
