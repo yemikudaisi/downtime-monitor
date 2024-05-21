@@ -51,7 +51,7 @@ impl Default for ServiceConfig {
 #[serde(rename_all = "camelCase")]
 #[allow(unused)]
 pub struct Heartbeat {
-    pub id: i64,
+    pub id: Option<i64>,
     pub service_id: i64,
     pub status: ServiceStatus,
     pub time: String,
