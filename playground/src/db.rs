@@ -1,6 +1,6 @@
 use chrono::Utc;
 use dotenv::dotenv;
-use rusqlite::{params, Connection, Error, Result};
+use rusqlite::{params, Connection, Result};
 use std::env;
 
 ///
@@ -107,7 +107,8 @@ pub mod heartbeat {
     }
 
     #[allow(unused)]
-    pub fn get_heartbeat_by_id(conn: &Connection, id: i64) -> Result<Option<Heartbeat>> {
+    pub fn get_by_id(id: i64) -> Result<Option<Heartbeat>> {
+        let conn = get_connection().unwrap();
         let mut stmt = conn.prepare("SELECT * FROM heartbeats WHERE id = ?1")?;
         let mut rows = stmt.query(params![id])?;
 
@@ -127,7 +128,8 @@ pub mod heartbeat {
     }
 
     #[allow(unused)]
-    pub fn get_all_heartbeats(conn: &Connection) -> Result<Vec<Heartbeat>> {
+    pub fn get_all() -> Result<Vec<Heartbeat>> {
+        let conn = get_connection().unwrap();
         let mut stmt = conn.prepare("SELECT * FROM heartbeats")?;
         let rows = stmt.query_map([], |row| {
             Ok(Heartbeat {
@@ -145,7 +147,8 @@ pub mod heartbeat {
     }
 
     #[allow(unused)]
-    pub fn update_heartbeat(conn: &Connection, heartbeat: &Heartbeat) -> Result<()> {
+    pub fn update(heartbeat: &Heartbeat) -> Result<()> {
+        let conn = get_connection().unwrap();
         conn.execute(
             "UPDATE heartbeats
             SET service_id = ?1, status = ?2, time = ?3, msg = ?4, duration = ?5, retries = ?6
@@ -300,7 +303,7 @@ pub mod service{
 
 }
 
-
+#[cfg(test)]
 mod tests {
     use chrono::Utc;
 
@@ -360,7 +363,8 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 1);
     }
-
+    
+    #[cfg(test)]
     mod service_tests {
         #[allow(unused_imports)]
         use super::*;
@@ -423,7 +427,9 @@ mod tests {
         }
     }
 
+     #[cfg(test)]
     mod heartbeat_tests {
+        #[allow(unused_imports)]
         use crate::db::heartbeat;
 
         #[allow(unused_imports)]
@@ -444,15 +450,16 @@ mod tests {
             let _ = heartbeat::insert(&get_test_heartbeat());
             let result = heartbeat::get_by_id(1);
             assert!(result.is_ok());
-            assert_eq!(result.unwrap().id.unwrap(), 1);
+            let id = result.unwrap().unwrap().id.unwrap();
+            assert_eq!(id, 1);
         }
     
         #[test]
-        fn test_get_all_service(){
+        fn get_all_is_ok(){
             reset_tables();
-            let _ = service::insert(&get_test_service());
-            let _ = service::insert(&get_test_service());
-            let result = match service::get_all() {
+            let _ = heartbeat::insert(&get_test_heartbeat());
+            let _ = heartbeat::insert(&get_test_heartbeat());
+            let result = match heartbeat::get_all() {
                 Ok(r) => r,
                 Err(e) => { 
                     eprint!("Error: {}", e);
@@ -463,27 +470,13 @@ mod tests {
         }
     
         #[test]
-        fn test_delete_service(){
+        fn test_delete_is_ok(){
             reset_tables();
-            let _ = service::insert(&get_test_service());
-            let delete_result = service::delete(&1);
+            let _ = heartbeat::insert(&get_test_heartbeat());
+            let delete_result = heartbeat::delete(&1);
             assert!(delete_result.is_ok());
-            let result = service::get_all();
+            let result = heartbeat::get_all();
             assert_eq!(result.unwrap().len(), 0);
-        }
-    
-        #[test]
-        fn test_update_service(){
-            reset_tables();
-            let mut service  = get_test_service();
-            let insert_id = service::insert(&service).unwrap();
-            service = service::get_by_id(insert_id).unwrap();
-            let new_name = "New Service Name";
-            service.name = new_name.to_string();
-            let result  = service::update(&service);
-            assert!(result.is_ok());
-            service = service::get_by_id(insert_id).unwrap();
-            assert_eq!(service.name, new_name.to_string());
         }
     }
 }
