@@ -1,7 +1,6 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
-use std::time::SystemTime;
+use std::{io::Error, str::FromStr, time::Duration};
 
 ///
 /// Contains service client configuration used for verification
@@ -52,12 +51,13 @@ impl Default for ServiceConfig {
 #[serde(rename_all = "camelCase")]
 #[allow(unused)]
 pub struct Heartbeat {
-    service_id: i64,
-    status: ServiceStatus,
-    time: SystemTime,
-    msg: String,
-    duration: Duration,
-    retries: i16,
+    pub id: i64,
+    pub service_id: i64,
+    pub status: ServiceStatus,
+    pub time: String,
+    pub msg: String,
+    pub duration: u64,
+    pub retries: i16,
 }
 
 ///
@@ -67,6 +67,33 @@ pub enum ServiceStatus {
     Up,
     Down,
     Pending,
+}
+
+impl FromStr for ServiceStatus {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s == "ip" {
+            return Ok(ServiceStatus::Up);
+        }
+        if s == "down" {
+            return Ok(ServiceStatus::Down);
+        }
+        if s == "pending" {
+            return Ok(ServiceStatus::Pending);
+        }
+        Ok(ServiceStatus::Down)
+    }
+}
+
+impl std::fmt::Display for ServiceStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ServiceStatus::Up => write!(f, "up"),
+            ServiceStatus::Down => write!(f, "down"),
+            ServiceStatus::Pending => write!(f, "pending"),
+        }
+    }
 }
 
 // mod iso8601 {

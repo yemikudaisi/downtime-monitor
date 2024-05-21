@@ -3,8 +3,6 @@ use dotenv::dotenv;
 use rusqlite::{params, Connection, Error, Result};
 use std::env;
 
-use crate::core::types::ServiceConfig;
-
 #[allow(unused)]
 pub fn get_connection() -> Result<Connection> {
     dotenv().ok();
@@ -34,19 +32,15 @@ pub fn create_tables() -> Result<()> {
         CREATE TABLE heartbeats (
             service_id INTEGER,
             status TEXT,
-            time DATETIME,
+            time TEXT,
             msg TEXT,
             duration INTEGER,
             retries INTEGER
         )";
-    let conn = get_connection().unwrap();
-    conn.transaction().unwrap().execute(service_query, []).expect("Unable to create service table.");
+    match  get_connection().unwrap();
+    conn.transaction().execute(service_query, []).expect("Unable to create service table.");
     conn.execute(&heartbeat_query, []).expect("Unable to create service table.");
     Ok(())
-}
-
-pub mod heartbeat {
-
 }
 
 ///
@@ -66,7 +60,6 @@ fn get_table_count(table_name: &str) -> Result<i64> {
     Ok(count)
 }
 
-
 #[allow(unused)]
 pub fn delete_tables() -> Result<usize, Error> {
     let query = "DROP TABLE services";
@@ -81,151 +74,223 @@ fn reset_tables(){
     _ = create_tables();
 }
 
-/// .
-/// Inserts service option into the database
-/// 
-/// ## Panics
-///
-/// Panics if table doesn't exist.
-///
-/// ## Errors
-///
-/// This function will return an error if
-#[allow(unused)]
-pub fn insert_service(service: &ServiceConfig) -> Result<i64> {
-    let conn = get_connection().unwrap();
-    let _ = conn.execute(
-        "INSERT INTO services (id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at)
-         VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        &[
-            &service.name, 
-            &service.description, 
-            &service.host, 
-            &service.port.to_string(), 
-            &service.secure.unwrap().to_string(), 
-            &service.user.clone().unwrap().to_string(), 
-            &service.pass.clone().unwrap().to_string(), 
-            &service.interval.unwrap().to_string(), 
-            &service.retry_interval.unwrap().to_string(), 
-            &service.interval_timeout.unwrap().to_string(),
-            &Utc::now().to_rfc3339(),
-            &Utc::now().to_rfc3339(),
-            ],
-    );
-    let res = conn.last_insert_rowid();
-    
-    Ok(res)
-}
+pub mod heartbeat {
+    use super::*;
+    use crate::core::types::{Heartbeat, ServiceStatus};
 
-#[allow(unused)]
-pub fn get_service_by_id(id: i64) -> rusqlite::Result<ServiceConfig> {
-    let conn = get_connection().unwrap();
-    let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at
-                 FROM services
-                 WHERE id = ?1";
+    pub fn create_heartbeat(heartbeat: &Heartbeat) -> Result<()> {
+        let conn = get_connection().unwrap();
+    conn.execute(
+        "INSERT INTO heartbeats (service_id, status, time, msg, duration, retries)
+         VALUES (NULL, ?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            heartbeat.service_id,
+            heartbeat.status.to_string(),
+            heartbeat.time.to_string(),
+            heartbeat.msg,
+            heartbeat.duration,
+            heartbeat.retries,
+        ],
+    )?;
+    Ok(())
+    }
 
-    let row = conn.query_row(query, params![id], |row| {
-        Ok(ServiceConfig {
-            id: Some(row.get(0)?),
-            name: row.get(1)?,
-            description: row.get(2)?,
-            host: row.get(3)?,
-            port: row.get(4)?,
-            secure: Some(row.get::<_, String>(5)? == "true"), //.to_string() == "true" { Some(true) } else { Some(false) } ,
-            user: row.get(6)?,
-            pass: row.get(7)?,
-            interval: row.get(8)?,
-            retry_interval: row.get(9)?,
-            interval_timeout: row.get(10)?,
-            created_at: row.get(11)?,
-            updated_at: row.get(12)?,
-        })
-    });
-    
-    row
-}
+    pub fn get_heartbeat_by_id(conn: &Connection, id: i64) -> Result<Option<Heartbeat>> {
+    let mut stmt = conn.prepare("SELECT * FROM Heartbeat WHERE id = ?1")?;
+    let mut rows = stmt.query(params![id])?;
 
-// fn main() -> Result<()> {
-//     let conn = Connection::open("my_database.db")?;
-
-//     let age: u8 = 25; // Replace with the desired age
-
-//     let mut stmt = conn.prepare("SELECT id, username, email FROM users WHERE age = :age")?;
-//     let user_iter = stmt.query_map(&[(":age", &age)], |row| {
-//         Ok(User {
-//             id: row.get(0)?,
-//             username: row.get(1)?,
-//             email: row.get(2)?,
-//         })
-//     })?;
-
-//     for user in user_iter {
-//         println!("{:?}", user);
-//     }
-
-//     Ok(())
-// }
-#[allow(unused)]
-fn get_all_services() -> rusqlite::Result<Vec<ServiceConfig>> {
-    let conn = get_connection().unwrap();
-    let mut stmt = conn.prepare("SELECT * FROM services")?;
-    let rows = stmt.query_map([], |row| {
-        Ok(ServiceConfig {
+    if let Some(row) = rows.next()? {
+        Ok(Some(Heartbeat {
             id: row.get(0)?,
-            name: row.get(1)?,
-            description: row.get(2)?,
-            host: row.get(3)?,
-            port: row.get(4)?,
-            secure: Some(row.get::<_, String>(5)? == "true"),
-            user: row.get(6)?,
-            pass: row.get(7)?,
-            interval: row.get(8)?,
-            retry_interval: row.get(9)?,
-            interval_timeout: row.get(10)?,            
-            created_at: row.get(11)?,
-            updated_at: row.get(12)?,
+            service_id: row.get(1)?,
+            status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
+            time: SystemTime::UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>(3)? as u64),
+            msg: row.get(4)?,
+            duration: Duration::from_secs(row.get::<_, i64>(5)? as u64),
+            retries: row.get(6)?,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_all_heartbeats(conn: &Connection) -> Result<Vec<Heartbeat>> {
+    let mut stmt = conn.prepare("SELECT * FROM Heartbeat")?;
+    let rows = stmt.query_map(NO_PARAMS, |row| {
+        Ok(Heartbeat {
+            id: row.get(0)?,
+            service_id: row.get(1)?,
+            status: ServiceStatus::from_str(&row.get::<_, String>(2)?).unwrap(),
+            time: SystemTime::UNIX_EPOCH + Duration::from_secs(row.get::<_, i64>(3)? as u64),
+            msg: row.get(4)?,
+            duration: Duration::from_secs(row.get::<_, i64>(5)? as u64),
+            retries: row.get(6)?,
         })
     })?;
+
     rows.collect()
 }
 
-#[allow(unused)]
-fn update_service( service: &ServiceConfig) -> rusqlite:: Result<usize>{
-    let conn = get_connection().unwrap();
-    let result = conn.execute(
-        "UPDATE services
-         SET name = ?1, description = ?2, host = ?3, port = ?4, secure = ?5, user = ?6, pass = ?7, interval = ?8, retry_interval = ?9, interval_timeout = ?10, updated_at = ?11
-         WHERE id = ?12",
+pub fn update_heartbeat(conn: &Connection, heartbeat: &Heartbeat) -> Result<()> {
+    conn.execute(
+        "UPDATE Heartbeat
+         SET service_id = ?1, status = ?2, time = ?3, msg = ?4, duration = ?5, retries = ?6
+         WHERE id = ?7",
         params![
-            service.name,
-            service.description,
-            service.host,
-            service.port,
-            service.secure,
-            service.user,
-            service.pass,
-            service.interval,
-            service.retry_interval,
-            service.interval_timeout,   
-            &Utc::now().to_rfc3339(),
-            service.id,
+            heartbeat.service_id,
+            heartbeat.status.to_string(),
+            heartbeat.time.to_string(),
+            heartbeat.msg,
+            heartbeat.duration,
+            heartbeat.retries,
+            heartbeat.id,
         ],
-    ).expect("Unable to update value");
-    
-    Ok(result)
+    )?;
+    Ok(())
 }
 
-#[allow(unused)]
-pub fn delete_service(id: &i64) -> rusqlite::Result<usize> {
-    let conn = get_connection().unwrap();
-    let result = conn.execute("DELETE FROM services WHERE id = ?", &[id]).expect("Unable to delete service");
-    
-    Ok(result)
+    #[allow(unused)]
+    pub fn delete(id: &i64) -> rusqlite::Result<usize> {
+        let conn = get_connection().unwrap();
+        let result = conn.execute("DELETE FROM heartbeats WHERE id = ?", &[id]).expect("Unable to delete heartbeat");
+        
+        Ok(result)
+    }
 }
+
+pub mod service{
+    use super::*;
+    use crate::core::types::ServiceConfig;
+
+    /// .
+    /// Inserts service option into the database
+    /// 
+    /// ## Panics
+    ///
+    /// Panics if table doesn't exist.
+    ///
+    /// ## Errors
+    ///
+    /// This function will return an error if
+    #[allow(unused)]
+    pub fn insert(service: &ServiceConfig) -> Result<i64> {
+        let conn = get_connection().unwrap();
+        let _ = conn.execute(
+            "INSERT INTO services (id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at)
+            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            &[
+                &service.name, 
+                &service.description, 
+                &service.host, 
+                &service.port.to_string(), 
+                &service.secure.unwrap().to_string(), 
+                &service.user.clone().unwrap().to_string(), 
+                &service.pass.clone().unwrap().to_string(), 
+                &service.interval.unwrap().to_string(), 
+                &service.retry_interval.unwrap().to_string(), 
+                &service.interval_timeout.unwrap().to_string(),
+                &Utc::now().to_rfc3339(),
+                &Utc::now().to_rfc3339(),
+                ],
+        );
+        let res = conn.last_insert_rowid();
+        
+        Ok(res)
+    }
+
+    #[allow(unused)]
+    pub fn get_by_id(id: i64) -> rusqlite::Result<ServiceConfig> {
+        let conn = get_connection().unwrap();
+        let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at
+                    FROM services
+                    WHERE id = ?1";
+
+        let row = conn.query_row(query, params![id], |row| {
+            Ok(ServiceConfig {
+                id: Some(row.get(0)?),
+                name: row.get(1)?,
+                description: row.get(2)?,
+                host: row.get(3)?,
+                port: row.get(4)?,
+                secure: Some(row.get::<_, String>(5)? == "true"), //.to_string() == "true" { Some(true) } else { Some(false) } ,
+                user: row.get(6)?,
+                pass: row.get(7)?,
+                interval: row.get(8)?,
+                retry_interval: row.get(9)?,
+                interval_timeout: row.get(10)?,
+                created_at: row.get(11)?,
+                updated_at: row.get(12)?,
+            })
+        });
+        
+        row
+    }
+
+    #[allow(unused)]
+    pub fn get_all() -> rusqlite::Result<Vec<ServiceConfig>> {
+        let conn = get_connection().unwrap();
+        let mut stmt = conn.prepare("SELECT * FROM services")?;
+        let rows = stmt.query_map([], |row| {
+            Ok(ServiceConfig {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                description: row.get(2)?,
+                host: row.get(3)?,
+                port: row.get(4)?,
+                secure: Some(row.get::<_, String>(5)? == "true"),
+                user: row.get(6)?,
+                pass: row.get(7)?,
+                interval: row.get(8)?,
+                retry_interval: row.get(9)?,
+                interval_timeout: row.get(10)?,            
+                created_at: row.get(11)?,
+                updated_at: row.get(12)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    #[allow(unused)]
+    pub fn update( service: &ServiceConfig) -> rusqlite:: Result<usize>{
+        let conn = get_connection().unwrap();
+        let result = conn.execute(
+            "UPDATE services
+            SET name = ?1, description = ?2, host = ?3, port = ?4, secure = ?5, user = ?6, pass = ?7, interval = ?8, retry_interval = ?9, interval_timeout = ?10, updated_at = ?11
+            WHERE id = ?12",
+            params![
+                service.name,
+                service.description,
+                service.host,
+                service.port,
+                service.secure,
+                service.user,
+                service.pass,
+                service.interval,
+                service.retry_interval,
+                service.interval_timeout,   
+                &Utc::now().to_rfc3339(),
+                service.id,
+            ],
+        ).expect("Unable to update value");
+        
+        Ok(result)
+    }
+
+    #[allow(unused)]
+    pub fn delete(id: &i64) -> rusqlite::Result<usize> {
+        let conn = get_connection().unwrap();
+        let result = conn.execute("DELETE FROM services WHERE id = ?", &[id]).expect("Unable to delete service");
+        
+        Ok(result)
+    }
+
+}
+
 
 mod tests {
     #[allow(unused_imports)]
     use super::*;
+    use crate::core::types::ServiceConfig;
 
     #[allow(unused)]
     fn get_test_service() -> ServiceConfig{
@@ -260,7 +325,7 @@ mod tests {
      #[test]
     fn test_table_table_count(){
         reset_tables();
-        _ = insert_service(&get_test_service());
+        _ = service::insert(&get_test_service());
         let result = get_table_count("services");
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), 1);
@@ -271,7 +336,7 @@ mod tests {
     fn test_insert_service_is_ok(){
         reset_tables();
         let service_params = get_test_service();
-        let result = insert_service(&service_params);
+        let result = service::insert(&service_params);
         assert!(result.is_ok());
         assert_eq!(get_table_count("services").unwrap(), 1);
     }
@@ -279,8 +344,8 @@ mod tests {
     #[test]
     fn test_get_service(){
         reset_tables();
-        let _ = insert_service(&get_test_service());
-        let result = get_service_by_id(1);
+        let _ = service::insert(&get_test_service());
+        let result = service::get_by_id(1);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().id.unwrap(), 1);
     }
@@ -288,9 +353,9 @@ mod tests {
     #[test]
     fn test_get_all_service(){
         reset_tables();
-        let _ = insert_service(&get_test_service());
-        let _ = insert_service(&get_test_service());
-        let result = match get_all_services() {
+        let _ = service::insert(&get_test_service());
+        let _ = service::insert(&get_test_service());
+        let result = match service::get_all() {
             Ok(r) => r,
             Err(e) => { 
                 eprint!("Error: {}", e);
@@ -303,10 +368,10 @@ mod tests {
     #[test]
     fn test_delete_service(){
         reset_tables();
-        let _ = insert_service(&get_test_service());
-        let delete_result = delete_service(&1);
+        let _ = service::insert(&get_test_service());
+        let delete_result = service::delete(&1);
         assert!(delete_result.is_ok());
-        let result = get_all_services();
+        let result = service::get_all();
         assert_eq!(result.unwrap().len(), 0);
     }
 
@@ -314,13 +379,13 @@ mod tests {
     fn test_update_service(){
         reset_tables();
         let mut service  = get_test_service();
-        let insert_id = insert_service(&service).unwrap();
-        service = get_service_by_id(insert_id).unwrap();
+        let insert_id = service::insert(&service).unwrap();
+        service = service::get_by_id(insert_id).unwrap();
         let new_name = "New Service Name";
         service.name = new_name.to_string();
-        let result  = update_service(&service);
+        let result  = service::update(&service);
         assert!(result.is_ok());
-        service = get_service_by_id(insert_id).unwrap();
+        service = service::get_by_id(insert_id).unwrap();
         assert_eq!(service.name, new_name.to_string());
     }
 }
