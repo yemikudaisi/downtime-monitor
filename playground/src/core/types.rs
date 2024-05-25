@@ -1,32 +1,32 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 ///
 /// Contains service client configuration used for verification
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ServiceConfig {
+pub struct ServiceParameters {
     pub id: Option<i64>,
     pub name: String,
     pub description: String,
     pub host: String,
-    pub port: i16,
+    pub port: u16,
     pub secure: Option<bool>,
     pub user: Option<String>,
     pub pass: Option<String>,
-    pub interval: Option<i32>,
-    pub retry_interval: Option<i32>,
-    pub interval_timeout: Option<i32>,
+    pub interval: Option<u32>,
+    pub retry_interval: Option<u32>,
+    pub interval_timeout: Option<u32>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 }
 
 ///
 /// Default implementation of `ServiceConfig` struct.`
-impl Default for ServiceConfig {
+impl Default for ServiceParameters {
     fn default() -> Self {
-        ServiceConfig {
+        ServiceParameters {
             id: None,
             name: String::new(),
             description: String::new(),
@@ -58,6 +58,21 @@ pub struct Heartbeat {
     pub msg: String,
     pub duration: u64,
     pub retries: i16,
+}
+
+///
+/// Result of serviec verification. Determines if its up.
+/// Contains error meesage if the service is down.
+#[derive(Serialize, Debug, Clone)]
+pub struct ServiceVerificationResult {
+    pub success: bool,
+    pub message: String,
+}
+
+impl Display for ServiceVerificationResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Succes: {}, message: {}", self.success, self.message)
+    }
 }
 
 ///
@@ -125,7 +140,7 @@ mod tests {
 
     #[test]
     fn test_service_config_defaults() {
-        let cfg = ServiceConfig {
+        let cfg = ServiceParameters {
             id: None,
             name: "Service 2".to_string(),
             description: "My service 2".to_string(),

@@ -3,29 +3,58 @@
 mod core;
 mod db;
 
+use core::{
+    schedule_manager::JobSchedulerManager,
+    types::{ServiceParameters, ServiceVerificationResult},
+};
 use tokio;
 
 #[tokio::main]
 async fn main() {
-    let _ = db::create_tables();
-    // let config = types::ServiceConfig {
-    //     id: None,
-    //     name: "Service 2".to_string(),
-    //     description: "My service 2".to_string(),
-    //     host: "localhost".to_string(),
-    //     port: 8080,
-    //     secure: Some(true),
-    //     user: Some("admin".to_string()),
-    //     pass: Some("".to_string()),
-    //     interval: Some(1000),
-    //     retry_interval: Some(5000),
-    //     interval_timeout: Some(3000),
-    // };
+    let mut manager = JobSchedulerManager::new().await;
+    let mut b_params = get_test_service();
+    b_params.host = "https://army.mil.bd".to_string();
+    b_params.interval = Some(15);
+    manager
+        .add_service(service_a, get_test_service())
+        .await
+        .expect("Failed to add service");
 
-    // let res = db::insert_service(&config);
-    // println!("Last inserted ID {}", res);
-    // println!("Terminated");
-    let res = db::service::get_by_id(1).unwrap();
-    // let deserialized = serde_json::to_string(res);
-    println!("{:#?}", serde_json::to_string(&res).unwrap());
+    manager
+        .add_service(service_b, b_params)
+        .await
+        .expect("Failed to add service");
+
+    let scheduler = manager.clone();
+    tokio::spawn(async move {
+        scheduler.start().await.expect("Failed to start scheduler");
+    });
+
+    manager.shutdown_on_ctrl_c().await;
+}
+
+fn get_test_service() -> ServiceParameters {
+    ServiceParameters {
+        name: String::from("Test Service 1"),
+        host: String::from("https://www.google.com"),
+        port: 80,
+        interval: Some(10),
+        ..Default::default()
+    }
+}
+
+fn service_a(s: ServiceParameters) -> ServiceVerificationResult {
+    println!("I run every 10 seconds.");
+    ServiceVerificationResult {
+        success: true,
+        message: format!("false: {}", s.host).to_string(),
+    }
+}
+
+fn service_b(s: ServiceParameters) -> ServiceVerificationResult {
+    println!("I run every 15 seconds.");
+    ServiceVerificationResult {
+        success: true,
+        message: format!("false: {}", s.host).to_string(),
+    }
 }

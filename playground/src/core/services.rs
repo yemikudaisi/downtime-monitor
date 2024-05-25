@@ -1,18 +1,10 @@
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{transport::smtp::SmtpTransportBuilder, SmtpTransport};
 // TODO: use tauri_plugin_http::reqwest;
+use super::types::{ServiceParameters, ServiceVerificationResult};
 use reqwest::header::HeaderValue;
 use reqwest::Client;
 use reqwest::StatusCode;
-use serde::Serialize;
-
-use super::types::ServiceConfig;
-
-#[derive(Serialize, Debug)]
-pub struct ServiceVerificationResult {
-    pub success: bool,
-    pub message: String,
-}
 
 ///
 /// Verifies if an SMTP service is up (Tecta)
@@ -24,7 +16,7 @@ pub struct ServiceVerificationResult {
 ///
 /// This function will return an error.
 #[allow(unused)]
-pub fn verify_smtp(smtp_config: &ServiceConfig) -> ServiceVerificationResult {
+pub fn verify_smtp(smtp_config: &ServiceParameters) -> ServiceVerificationResult {
     let mut builder: SmtpTransportBuilder;
     match smtp_config.secure != None && smtp_config.secure.unwrap() {
         true => {
@@ -105,7 +97,7 @@ pub fn verify_smtp(smtp_config: &ServiceConfig) -> ServiceVerificationResult {
 ///
 /// This function will return an error if .
 #[allow(unused)]
-pub async fn verify_website(website_config: &ServiceConfig) -> ServiceVerificationResult {
+pub async fn verify_website(website_config: &ServiceParameters) -> ServiceVerificationResult {
     let client = Client::new();
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert("User-Agent", HeaderValue::from_static("hello"));
@@ -147,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_verify_smtp_return_true() {
-        let smtp_config = ServiceConfig {
+        let smtp_config = ServiceParameters {
             host: String::from("smtp.freesmtpservers.com"),
             port: 25,
             ..Default::default()
@@ -158,7 +150,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_verify_website_return_false() {
-        let website_config = ServiceConfig {
+        let website_config = ServiceParameters {
             host: String::from("wronghost"),
             port: 80,
             ..Default::default()
@@ -169,7 +161,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_verify_website_return_true() {
-        let website_config = ServiceConfig {
+        let website_config = ServiceParameters {
             host: String::from("https://www.google.com"),
             port: 80,
             ..Default::default()

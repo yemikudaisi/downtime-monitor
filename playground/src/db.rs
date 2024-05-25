@@ -177,7 +177,7 @@ pub mod heartbeat {
 
 pub mod service{
     use super::*;
-    use crate::core::types::ServiceConfig;
+    use crate::core::types::ServiceParameters;
 
     /// .
     /// Inserts service option into the database
@@ -190,7 +190,7 @@ pub mod service{
     ///
     /// This function will return an error if
     #[allow(unused)]
-    pub fn insert(service: &ServiceConfig) -> Result<i64> {
+    pub fn insert(service: &ServiceParameters) -> Result<i64> {
         let conn = get_connection().unwrap();
         let _ = conn.execute(
             "INSERT INTO services (id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at)
@@ -216,14 +216,14 @@ pub mod service{
     }
 
     #[allow(unused)]
-    pub fn get_by_id(id: i64) -> rusqlite::Result<ServiceConfig> {
+    pub fn get_by_id(id: i64) -> rusqlite::Result<ServiceParameters> {
         let conn = get_connection().unwrap();
         let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at
                     FROM services
                     WHERE id = ?1";
 
         let row = conn.query_row(query, params![id], |row| {
-            Ok(ServiceConfig {
+            Ok(ServiceParameters {
                 id: Some(row.get(0)?),
                 name: row.get(1)?,
                 description: row.get(2)?,
@@ -244,11 +244,11 @@ pub mod service{
     }
 
     #[allow(unused)]
-    pub fn get_all() -> rusqlite::Result<Vec<ServiceConfig>> {
+    pub fn get_all() -> rusqlite::Result<Vec<ServiceParameters>> {
         let conn = get_connection().unwrap();
         let mut stmt = conn.prepare("SELECT * FROM services")?;
         let rows = stmt.query_map([], |row| {
-            Ok(ServiceConfig {
+            Ok(ServiceParameters {
                 id: row.get(0)?,
                 name: row.get(1)?,
                 description: row.get(2)?,
@@ -268,7 +268,7 @@ pub mod service{
     }
 
     #[allow(unused)]
-    pub fn update( service: &ServiceConfig) -> rusqlite:: Result<usize>{
+    pub fn update( service: &ServiceParameters) -> rusqlite:: Result<usize>{
         let conn = get_connection().unwrap();
         let result = conn.execute(
             "UPDATE services
@@ -309,12 +309,12 @@ mod tests {
 
     #[allow(unused_imports)]
     use super::super::db::service::*;
-    use crate::{core::types::{Heartbeat, ServiceConfig, ServiceStatus}, db::{create_tables, delete_tables, get_connection, get_table_count, reset_tables}};
+    use crate::{core::types::{Heartbeat, ServiceParameters, ServiceStatus}, db::{create_tables, delete_tables, get_connection, get_table_count, reset_tables}};
     use crate::db::service;
 
     #[allow(unused)]
-    fn get_test_service() -> ServiceConfig{
-        ServiceConfig {
+    fn get_test_service() -> ServiceParameters{
+        ServiceParameters {
             name: String::from("Test Service 1"),
             host: String::from("https://www.google.com"),
             port: 80,
