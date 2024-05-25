@@ -16,17 +16,18 @@ use reqwest::StatusCode;
 ///
 /// This function will return an error.
 #[allow(unused)]
-pub fn verify_smtp(smtp_config: &ServiceParameters) -> ServiceVerificationResult {
+pub fn verify_smtp(parameters: &ServiceParameters) -> ServiceVerificationResult {
     let mut builder: SmtpTransportBuilder;
-    match smtp_config.secure != None && smtp_config.secure.unwrap() {
+    match parameters.secure != None && parameters.secure.unwrap() {
         true => {
             let result: Result<SmtpTransportBuilder, lettre::transport::smtp::Error> =
-                SmtpTransport::starttls_relay(&smtp_config.host);
+                SmtpTransport::starttls_relay(&parameters.host);
             match result {
                 Ok(smtp_transport_builder) => builder = smtp_transport_builder,
                 Err(e) => {
                     println!("Error: {:?}", e);
                     return ServiceVerificationResult {
+                        service_id: parameters.id.unwrap(),
                         success: false,
                         message: format!("{}", e),
                     };
@@ -34,18 +35,18 @@ pub fn verify_smtp(smtp_config: &ServiceParameters) -> ServiceVerificationResult
             }
         }
         false => {
-            builder = SmtpTransport::builder_dangerous(&smtp_config.host);
+            builder = SmtpTransport::builder_dangerous(&parameters.host);
             println!("[+] Testing SMTP without TLS.");
         }
     };
-    builder = builder.port(smtp_config.port as u16);
+    builder = builder.port(parameters.port as u16);
 
     let transport: SmtpTransport;
 
-    if !(smtp_config.user.as_ref() == None) {
+    if !(parameters.user.as_ref() == None) {
         let creds = Credentials::new(
-            smtp_config.user.as_ref().unwrap().to_string(),
-            smtp_config.pass.as_ref().unwrap().clone(),
+            parameters.user.as_ref().unwrap().to_string(),
+            parameters.pass.as_ref().unwrap().clone(),
         );
         transport = builder.credentials(creds).build();
     } else {
@@ -54,10 +55,12 @@ pub fn verify_smtp(smtp_config: &ServiceParameters) -> ServiceVerificationResult
 
     match transport.test_connection() {
         Ok(_) => ServiceVerificationResult {
+            service_id: parameters.id.unwrap(),
             success: true,
             message: "Connection successful".to_string(),
         },
         Err(e) => ServiceVerificationResult {
+            service_id: parameters.id.unwrap(),
             success: false,
             message: format!("Test failed: {}", e),
         },
@@ -97,26 +100,28 @@ pub fn verify_smtp(smtp_config: &ServiceParameters) -> ServiceVerificationResult
 ///
 /// This function will return an error if .
 #[allow(unused)]
-pub async fn verify_website(website_config: &ServiceParameters) -> ServiceVerificationResult {
+pub async fn verify_website(parameters: &ServiceParameters) -> ServiceVerificationResult {
     let client = Client::new();
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert("User-Agent", HeaderValue::from_static("hello"));
     let full_url;
-    if website_config.port != 80 {
-        full_url = format!("{}:{}", website_config.host, website_config.port);
+    if parameters.port != 80 {
+        full_url = format!("{}:{}", parameters.host, parameters.port);
     } else {
-        full_url = website_config.host.clone();
+        full_url = parameters.host.clone();
     }
     // Send a GET request to the specified URL
     match client.get(&full_url).headers(headers).send().await {
         Ok(response) => {
             if response.status() == StatusCode::OK {
                 ServiceVerificationResult {
+                    service_id: parameters.id.unwrap(),
                     success: true,
                     message: format!("Website {} is online", full_url),
                 }
             } else {
                 ServiceVerificationResult {
+                    service_id: parameters.id.unwrap(),
                     success: false,
                     message: format!(
                         "Website {} returned status code: {}",
@@ -127,6 +132,7 @@ pub async fn verify_website(website_config: &ServiceParameters) -> ServiceVerifi
             }
         }
         Err(e) => ServiceVerificationResult {
+            service_id: parameters.id.unwrap(),
             success: false,
             message: format!("Error ({}): {}", full_url, e),
         },

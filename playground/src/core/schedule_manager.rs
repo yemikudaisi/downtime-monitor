@@ -27,9 +27,10 @@ impl JobSchedulerManager {
         &self,
         service_verifier: fn(ServiceParameters) -> ServiceVerificationResult,
         service_parameters: ServiceParameters,
+        notifier: fn(ServiceVerificationResult),
     ) -> Result<Uuid, Box<dyn std::error::Error>> {
         let seconds = service_parameters.interval.unwrap_or(60);
-        let job_schedule = seconds_to_cron(seconds);
+        let job_schedule = seconds_to_cron_exp(seconds);
 
         let job_id = Uuid::new_v4();
         let sp_clone = service_parameters.clone();
@@ -38,7 +39,7 @@ impl JobSchedulerManager {
         self.scheduler
             .add(Job::new(job_schedule.as_str(), move |_uuid, _l| {
                 let result = service_verifier(sp_clone.clone());
-                println!("Service Verifier Result: {}", result);
+                notifier(result)
             })?)
             .await?;
 
@@ -101,7 +102,7 @@ impl JobSchedulerManager {
     }
 }
 
-pub fn seconds_to_cron(seconds: u32) -> String {
+pub fn seconds_to_cron_exp(seconds: u32) -> String {
     if seconds == 0 {
         return String::from("* * * * * *");
     }
@@ -120,5 +121,5 @@ pub fn seconds_to_cron(seconds: u32) -> String {
 
 #[test]
 fn test_seconds_to_cron() {
-    assert_eq!(seconds_to_cron(10), "1/10 * * * * *")
+    assert_eq!(seconds_to_cron_exp(10), "1/10 * * * * *")
 }

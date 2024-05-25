@@ -12,16 +12,19 @@ use tokio;
 #[tokio::main]
 async fn main() {
     let mut manager = JobSchedulerManager::new().await;
+    let mut a_params = get_test_service();
+    a_params.id = Some(1);
     let mut b_params = get_test_service();
+    b_params.id = Some(444);
     b_params.host = "https://army.mil.bd".to_string();
-    b_params.interval = Some(15);
+    b_params.interval = Some(20);
     manager
-        .add_service(service_a, get_test_service())
+        .add_service(service_a, a_params, notifier)
         .await
         .expect("Failed to add service");
 
     manager
-        .add_service(service_b, b_params)
+        .add_service(service_b, b_params, notifier)
         .await
         .expect("Failed to add service");
 
@@ -31,6 +34,10 @@ async fn main() {
     });
 
     manager.shutdown_on_ctrl_c().await;
+}
+
+fn notifier(result: ServiceVerificationResult) {
+    println!("Notificiation: {}", result);
 }
 
 fn get_test_service() -> ServiceParameters {
@@ -44,17 +51,20 @@ fn get_test_service() -> ServiceParameters {
 }
 
 fn service_a(s: ServiceParameters) -> ServiceVerificationResult {
-    println!("I run every 10 seconds.");
+    //print!("{:?}", s);
+    println!("I run every 10 seconds.",);
     ServiceVerificationResult {
+        service_id: s.id.unwrap(),
         success: true,
-        message: format!("false: {}", s.host).to_string(),
+        message: format!("{}", s.host).to_string(),
     }
 }
 
 fn service_b(s: ServiceParameters) -> ServiceVerificationResult {
-    println!("I run every 15 seconds.");
+    println!("I run every 20 seconds.");
     ServiceVerificationResult {
+        service_id: s.id.unwrap(),
         success: true,
-        message: format!("false: {}", s.host).to_string(),
+        message: format!("{}", s.host).to_string(),
     }
 }

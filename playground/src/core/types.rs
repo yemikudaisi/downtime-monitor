@@ -2,6 +2,46 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, str::FromStr};
 
+const HTTP_SERVICE_CODE: &str = "http";
+const SMTP_SERVICE_CODE: &str = "smtp";
+const FTP_SERVICE_CODE: &str = "ftp";
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ServiceType {
+    Http,
+    Smtp,
+    Ftp,
+}
+
+impl ServiceType {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            ServiceType::Http => HTTP_SERVICE_CODE,
+            ServiceType::Smtp => SMTP_SERVICE_CODE,
+            ServiceType::Ftp => FTP_SERVICE_CODE,
+        }
+    }
+
+    pub fn from_string(service_str: &str) -> ServiceType {
+        match service_str {
+            HTTP_SERVICE_CODE => ServiceType::Http,
+            SMTP_SERVICE_CODE => ServiceType::Smtp,
+            FTP_SERVICE_CODE => ServiceType::Ftp,
+            _ => ServiceType::Http,
+        }
+    }
+}
+
+impl std::fmt::Display for ServiceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ServiceType::Http => write!(f, "{}", HTTP_SERVICE_CODE.to_string()),
+            ServiceType::Smtp => write!(f, "{}", SMTP_SERVICE_CODE.to_string()),
+            ServiceType::Ftp => write!(f, "{}", FTP_SERVICE_CODE.to_string()),
+        }
+    }
+}
+
 ///
 /// Contains service client configuration used for verification
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -20,6 +60,7 @@ pub struct ServiceParameters {
     pub interval_timeout: Option<u32>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+    pub service_type: ServiceType,
 }
 
 ///
@@ -40,6 +81,7 @@ impl Default for ServiceParameters {
             interval_timeout: Some(48),
             created_at: Some(Utc::now().to_rfc3339()),
             updated_at: Some(Utc::now().to_rfc3339()),
+            service_type: ServiceType::Http,
         }
     }
 }
@@ -65,13 +107,18 @@ pub struct Heartbeat {
 /// Contains error meesage if the service is down.
 #[derive(Serialize, Debug, Clone)]
 pub struct ServiceVerificationResult {
+    pub service_id: i64,
     pub success: bool,
     pub message: String,
 }
 
 impl Display for ServiceVerificationResult {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Succes: {}, message: {}", self.success, self.message)
+        write!(
+            f,
+            "Service [{}] verification result -> [success: {}, message: {}]",
+            self.service_id, self.success, self.message
+        )
     }
 }
 

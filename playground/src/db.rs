@@ -32,7 +32,8 @@ pub fn create_tables() -> Result<()> {
             retry_interval INTEGER,
             interval_timeout INTEGER,
             created_at TEXT,
-            updated_at TEXT
+            updated_at TEXT,
+            service_type TEXT
         )";
     let heartbeat_query = "
         CREATE TABLE IF NOT EXISTS heartbeats (
@@ -73,7 +74,7 @@ pub fn delete_tables() -> rusqlite::Result<()> {
     let mut conn = get_connection().unwrap();
     let tx = conn.transaction().unwrap();
     tx.execute("DROP TABLE IF EXISTS heartbeats", []);
-    tx.execute("DROP TABLE EXISTS services", []);
+    tx.execute("DROP TABLE IF EXISTS services", []);
     tx.commit()
 }
 
@@ -177,7 +178,7 @@ pub mod heartbeat {
 
 pub mod service{
     use super::*;
-    use crate::core::types::ServiceParameters;
+    use crate::core::types::{ServiceParameters, ServiceType};
 
     /// .
     /// Inserts service option into the database
@@ -191,10 +192,11 @@ pub mod service{
     /// This function will return an error if
     #[allow(unused)]
     pub fn insert(service: &ServiceParameters) -> Result<i64> {
+        //let service_type = service.service_type.to_str().to_string();
         let conn = get_connection().unwrap();
         let _ = conn.execute(
-            "INSERT INTO services (id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at)
-            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO services (id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at, service_type)
+            VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             &[
                 &service.name, 
                 &service.description, 
@@ -208,6 +210,7 @@ pub mod service{
                 &service.interval_timeout.unwrap().to_string(),
                 &Utc::now().to_rfc3339(),
                 &Utc::now().to_rfc3339(),
+                &service.service_type.to_str().to_string(),
                 ],
         );
         let res = conn.last_insert_rowid();
@@ -218,11 +221,12 @@ pub mod service{
     #[allow(unused)]
     pub fn get_by_id(id: i64) -> rusqlite::Result<ServiceParameters> {
         let conn = get_connection().unwrap();
-        let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at
+        let query = "SELECT id, name, description, host, port, secure, user, pass, interval, retry_interval, interval_timeout, created_at, updated_at, service_type
                     FROM services
                     WHERE id = ?1";
 
         let row = conn.query_row(query, params![id], |row| {
+            let service_type_str: String = row.get(13)?;
             Ok(ServiceParameters {
                 id: Some(row.get(0)?),
                 name: row.get(1)?,
@@ -237,6 +241,7 @@ pub mod service{
                 interval_timeout: row.get(10)?,
                 created_at: row.get(11)?,
                 updated_at: row.get(12)?,
+                service_type: ServiceType::from_string(&service_type_str),
             })
         });
         
@@ -248,6 +253,7 @@ pub mod service{
         let conn = get_connection().unwrap();
         let mut stmt = conn.prepare("SELECT * FROM services")?;
         let rows = stmt.query_map([], |row| {
+            let service_type_str: String = row.get(13)?;
             Ok(ServiceParameters {
                 id: row.get(0)?,
                 name: row.get(1)?,
@@ -262,6 +268,7 @@ pub mod service{
                 interval_timeout: row.get(10)?,            
                 created_at: row.get(11)?,
                 updated_at: row.get(12)?,
+                service_type: ServiceType::from_string(&service_type_str),
             })
         })?;
         rows.collect()
@@ -272,8 +279,8 @@ pub mod service{
         let conn = get_connection().unwrap();
         let result = conn.execute(
             "UPDATE services
-            SET name = ?1, description = ?2, host = ?3, port = ?4, secure = ?5, user = ?6, pass = ?7, interval = ?8, retry_interval = ?9, interval_timeout = ?10, updated_at = ?11
-            WHERE id = ?12",
+            SET name = ?1, description = ?2, host = ?3, port = ?4, secure = ?5, user = ?6, pass = ?7, interval = ?8, retry_interval = ?9, interval_timeout = ?10, updated_at = ?11, service_type = ?12
+            WHERE id = ?13",
             params![
                 service.name,
                 service.description,
@@ -286,6 +293,7 @@ pub mod service{
                 service.retry_interval,
                 service.interval_timeout,   
                 &Utc::now().to_rfc3339(),
+                service.service_type.to_str().to_string(),
                 service.id,
             ],
         ).expect("Unable to update value");
