@@ -3,29 +3,89 @@
 mod core;
 mod db;
 
+use core::{
+    schedule_manager::JobSchedulerManager,
+    types::{ServiceParameters, ServiceVerificationResult},
+};
 use tokio;
 
 #[tokio::main]
 async fn main() {
-    let _ = db::create_tables();
-    // let config = types::ServiceConfig {
-    //     id: None,
-    //     name: "Service 2".to_string(),
-    //     description: "My service 2".to_string(),
-    //     host: "localhost".to_string(),
-    //     port: 8080,
-    //     secure: Some(true),
-    //     user: Some("admin".to_string()),
-    //     pass: Some("".to_string()),
-    //     interval: Some(1000),
-    //     retry_interval: Some(5000),
-    //     interval_timeout: Some(3000),
-    // };
+    let mut manager = JobSchedulerManager::new().await;
+    let mut a_params = get_test_service();
+    a_params.id = Some(1);
+    let mut b_params = get_test_service();
+    b_params.id = Some(2);
+    b_params.host = "https://army.mil.bd".to_string();
+    b_params.interval = Some(20);
+    manager
+        .add_service(service_a, a_params, notifier)
+        .await
+        .expect("Failed to add service");
 
-    // let res = db::insert_service(&config);
-    // println!("Last inserted ID {}", res);
-    // println!("Terminated");
-    let res = db::service::get_by_id(1).unwrap();
-    // let deserialized = serde_json::to_string(res);
-    println!("{:#?}", serde_json::to_string(&res).unwrap());
+    manager
+        .add_service(service_b, b_params, notifier)
+        .await
+        .expect("Failed to add service");
+
+    let scheduler = manager.clone();
+    tokio::spawn(async move {
+        scheduler.start().await.expect("Failed to start scheduler");
+    });
+
+    manager.shutdown_on_ctrl_c().await;
+}
+
+fn notifier(result: ServiceVerificationResult) {
+    println!("Notificiation: {}", result);
+}
+
+fn get_test_service() -> ServiceParameters {
+    ServiceParameters {
+        name: String::from("Test Service 1"),
+        host: String::from("https://www.google.com"),
+        port: 80,
+        interval: Some(10),
+        ..Default::default()
+    }
+}
+
+fn service_a(s: ServiceParameters) -> ServiceVerificationResult {
+    //print!("{:?}", s);
+    println!("I run every 10 seconds.",);
+    ServiceVerificationResult {
+        service_id: s.id.unwrap(),
+        success: true,
+        message: format!("{}", s.host).to_string(),
+    }
+}
+
+fn service_b(s: ServiceParameters) -> ServiceVerificationResult {
+    println!("I run every 20 seconds.");
+    ServiceVerificationResult {
+        service_id: s.id.unwrap(),
+        success: true,
+        message: format!("{}", s.host).to_string(),
+    }
+}
+
+#[tokio::test]
+#[should_panic]
+async fn test_duplicate_service_id_panics() {
+    let manager = JobSchedulerManager::new().await;
+    let mut a_params = get_test_service();
+    a_params.id = Some(1);
+    let mut b_params = get_test_service();
+    b_params.id = Some(1);
+    b_params.host = "https://army.mil.bd".to_string();
+    b_params.interval = Some(20);
+    manager
+        .add_service(service_a, a_params, notifier)
+        .await
+        .expect("Failed to add service");
+
+    manager
+        .add_service(service_b, b_params, notifier)
+        .await
+        .expect("Failed to add service");
 }
