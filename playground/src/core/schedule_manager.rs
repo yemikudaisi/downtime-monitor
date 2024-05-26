@@ -22,13 +22,19 @@ impl JobSchedulerManager {
         }
     }
 
-    #[allow(unused)]
     pub async fn add_service(
         &self,
         service_verifier: fn(ServiceParameters) -> ServiceVerificationResult,
         service_parameters: ServiceParameters,
         notifier: fn(ServiceVerificationResult),
     ) -> Result<Uuid, Box<dyn std::error::Error>> {
+        // Check for duplicates
+        let job_map = self.job_map.lock().unwrap();
+        if job_map.values().any(|&id| id == service_parameters.id) {
+            return Err("Service with the same ID already exists".into());
+        }
+        drop(job_map); // Release the lock before proceeding
+
         let seconds = service_parameters.interval.unwrap_or(60);
         let job_schedule = seconds_to_cron_exp(seconds);
 
@@ -50,13 +56,11 @@ impl JobSchedulerManager {
         Ok(job_id)
     }
 
-    #[allow(unused)]
     pub async fn start(&self) -> Result<(), Box<dyn std::error::Error>> {
         self.scheduler.start().await?;
         Ok(())
     }
 
-    #[allow(unused)]
     pub async fn shutdown_on_ctrl_c(&mut self) {
         signal::ctrl_c().await.expect("Failed to listen for Ctrl+C");
         println!("Received Ctrl+C, shutting down...");
@@ -66,7 +70,7 @@ impl JobSchedulerManager {
     #[allow(unused)]
     pub async fn stop_job_by_uuid(&self, job_id: &Uuid) -> Result<(), Box<dyn std::error::Error>> {
         self.scheduler.remove(job_id).await?;
-        self.job_map.lock().unwrap().remove(&job_id);
+        self.job_map.lock().unwrap().remove(job_id);
         Ok(())
     }
 
@@ -109,13 +113,14 @@ pub fn seconds_to_cron_exp(seconds: u32) -> String {
 
     let hours = seconds / 3600;
     let minutes = (seconds % 3600) / 60;
+    let seconds = seconds % 60;
 
     if hours == 0 && minutes == 0 {
         format!("*/{} * * * * *", seconds)
     } else if hours == 0 {
-        format!("{} * * * * *", minutes)
+        format!("{} */{} * * * *", seconds, minutes)
     } else {
-        format!("0 {} * * * *", hours)
+        format!("{} {} */{} * * *", seconds, minutes, hours)
     }
 }
 

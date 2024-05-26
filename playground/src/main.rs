@@ -15,7 +15,7 @@ async fn main() {
     let mut a_params = get_test_service();
     a_params.id = Some(1);
     let mut b_params = get_test_service();
-    b_params.id = Some(444);
+    b_params.id = Some(2);
     b_params.host = "https://army.mil.bd".to_string();
     b_params.interval = Some(20);
     manager
@@ -67,4 +67,25 @@ fn service_b(s: ServiceParameters) -> ServiceVerificationResult {
         success: true,
         message: format!("{}", s.host).to_string(),
     }
+}
+
+#[tokio::test]
+#[should_panic]
+async fn test_duplicate_service_id_panics() {
+    let manager = JobSchedulerManager::new().await;
+    let mut a_params = get_test_service();
+    a_params.id = Some(1);
+    let mut b_params = get_test_service();
+    b_params.id = Some(1);
+    b_params.host = "https://army.mil.bd".to_string();
+    b_params.interval = Some(20);
+    manager
+        .add_service(service_a, a_params, notifier)
+        .await
+        .expect("Failed to add service");
+
+    manager
+        .add_service(service_b, b_params, notifier)
+        .await
+        .expect("Failed to add service");
 }
