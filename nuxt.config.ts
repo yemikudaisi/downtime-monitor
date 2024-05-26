@@ -8,7 +8,7 @@ export default defineNuxtConfig({
     "@nuxtjs/tailwindcss",
     "@pinia/nuxt",
     "@vueuse/nuxt",
-    'radix-vue/nuxt',
+    'radix-vue/nuxt', // TODO: Remove radix if not used
     "@nuxt/eslint",
     'nuxt-icon'
   ],
